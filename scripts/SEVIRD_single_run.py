@@ -66,7 +66,13 @@ delta = .5
 rho = 1
 gamma = (1 / 1.8)
 mu = np.log(args.R0) * .6
-baseline_model = SEVIRDModel(delta, args.R0, rho, gamma, district_names, grouped_census, flux, mu, sde=False)
+sde = False
+eta = 0.5
+c_v = 0.3
+alpha = 0.32
+zeta = 0.333
+
+baseline_model = SEVIRDModel(delta, args.R0, rho, gamma, district_names, grouped_census, flux, mu, sde, eta, c_v, alpha, zeta)
 (baseline_pd, baseline_ar, _) = run_model(baseline_model, n_weeks, weekends, args.district_name, no_closures)
 
 

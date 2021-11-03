@@ -27,16 +27,23 @@ from epcontrol.utils import find_peaks
 
 
 class SEVIRDModel:
-    def __init__(self,
-                 delta: float,
-                 R0: float,
-                 rho: float,
-                 gamma: float,
-                 district_names: List[str],
-                 grouped_census,
-                 flux,
-                 mu: float,
-                 sde: bool):
+    def __init__(
+        self,
+        delta: float,
+        R0: float,
+        rho: float,
+        gamma: float,
+        district_names: List[str],
+        grouped_census,
+        flux,
+        mu: float,
+        sde: bool,
+        eta: float,
+        c_v: float,
+        alpha: float,
+        zeta: float
+    ) -> None:
+
         self.delta = delta
         self.district_names = district_names
         self.n_districts = len(self.district_names)
@@ -59,11 +66,15 @@ class SEVIRDModel:
 
         self.rho = rho
         self.gamma = gamma
+        self.eta = eta
+        self.c_v = c_v
+        self.alpha = alpha
+        self.zeta = zeta
         self.R0 = R0
         self.betas = np.asarray([compute_beta(R0, gamma, cm_school) for cm_school in self.cms_school], np.float32)
 
         self.flux = flux
-        self.sde_steps = int(1 / delta)
+        self.sde_steps = int(1 / self.delta)
 
         # make sure the districts are the same than the ones provide in the census
         assert self.district_names == list(grouped_census.index)
@@ -129,49 +140,64 @@ class SEVIRDModel:
 
     def step(self, t: int, school_states: Sequence[int]):
         sparked_districts_indices = self.districts_sparked.nonzero()[0]
+
         if not self.sde:
             W = np.zeros((self.sde_steps, len(sparked_districts_indices), 3, self.n_age_groups))
+
         else:
             W = np.random.standard_normal((self.sde_steps, len(sparked_districts_indices), 3, self.n_age_groups))
-        return _step(school_states,
-                     self.seir_state,
-                     self.cms_school,
-                     self.cms_no_school,
-                     self.adult_susceptibles,
-                     self.districts_school_states,
-                     self.districts_sparked,
-                     self.betas,
-                     self.rho,
-                     self.gamma,
-                     self.delta,
-                     self.sde_steps,
-                     self.flux.Tij,
-                     self.districts_lambda,
-                     self.districts_import_threshold,
-                     sparked_districts_indices,
-                     W,
-                     self.mu)
+
+        return _step(
+            school_states,
+            self.seir_state,
+            self.cms_school,
+            self.cms_no_school,
+            self.adult_susceptibles,
+            self.districts_school_states,
+            self.districts_sparked,
+            self.betas,
+            self.rho,
+            self.gamma,
+            self.delta,
+            self.sde_steps,
+            self.flux.Tij,
+            self.districts_lambda,
+            self.districts_import_threshold,
+            sparked_districts_indices,
+            W,
+            self.mu,
+            self.eta,
+            self.c_v,
+            self.alpha,
+            self.zeta
+        )
 
 
 @njit(cache=True)
-def _step(school_states,
-          seir_state,
-          cms_school,
-          cms_no_school,
-          adult_susceptibles,
-          districts_school_states,
-          districts_sparked,
-          betas,
-          rho,
-          gamma,
-          delta,
-          sde_steps,
-          flux_tij,
-          districts_lambda,
-          districts_import_threshold,
-          sparked_districts_indices,
-          W,
-          mu):
+def _step(
+    school_states,
+    seir_state,
+    cms_school,
+    cms_no_school,
+    adult_susceptibles,
+    districts_school_states,
+    districts_sparked,
+    betas,
+    rho,
+    gamma,
+    delta,
+    sde_steps,
+    flux_tij,
+    districts_lambda,
+    districts_import_threshold,
+    sparked_districts_indices,
+    W,
+    mu,
+    eta,
+    c_v,
+    alpha,
+    zeta
+):
 
     adults_idx = 2
 
@@ -207,10 +233,10 @@ def _step(school_states,
         Ds = seir_state[sparked_districts_indices, Compartment.D.value]
 
         # FIXME: Add hard-coded parameters in model parameters
-        eta = 1
-        c_v = 1
-        alpha = 1
-        zeta = 1
+        # eta = 1
+        # c_v = 1
+        # alpha = 1
+        # zeta = 1
 
         # FIXME: change rho to zeta
         SEs = np.expand_dims(betas[sparked_districts_indices], axis=1) * weighted_inf_sums * Ss

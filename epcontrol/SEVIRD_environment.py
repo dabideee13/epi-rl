@@ -51,7 +51,11 @@ class SEVIRDEnvironment(Env):
                  step_granularity: Optional[Granularity] = Granularity.WEEK,
                  budget_per_district_in_weeks: Optional[int] = None,
                  model_seed: Optional[str] = "Greenwich",
-                 seed: Optional[int] = None,) -> None:
+                 seed: Optional[int] = None,
+                 eta: float = 1,
+                 c_v: float = 1,
+                 alpha: float = 1,
+                 zeta: float = 1) -> None:
         super().__init__()
 
         if mu is None:
@@ -64,7 +68,7 @@ class SEVIRDEnvironment(Env):
 
         self.start_budget_per_district_in_weeks = budget_per_district_in_weeks
         self._model_params = [delta, r0, rho, gamma, district_names, grouped_census,
-                              flux, mu, sde]
+                              flux, mu, sde, eta, c_v, alpha, zeta]
         self._model_seed = model_seed
         self._model = self._make_model()
         self._total_susceptibles = self._model.total_susceptibles()
