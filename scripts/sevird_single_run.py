@@ -7,7 +7,8 @@ import pandas as pd
 from stable_baselines import PPO2
 
 import epcontrol.census.Flux as flux
-from epcontrol.seir_environment import Granularity
+# FIXME: Granularity, when different `Granularity` is imported, there will be a TypeError
+from epcontrol.SEVIRD_environment import Granularity
 from epcontrol.UK_RL_school_weekly import run_model
 from epcontrol.SEVIRD_model import SEVIRDModel
 from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWrapper
@@ -44,7 +45,7 @@ grouped_census = pd.read_csv(args.census, index_col=0)
 grouped_census = grouped_census.filter(items=[args.district_name], axis=0)
 
 register(id="SEVIRDsingle-v0",
-         entry_point="epcontrol.sevird_environment:SEVIRDEnvironment",
+         entry_point="epcontrol.SEVIRD_environment:SEVIRDEnvironment",
          max_episode_steps=n_weeks * (7 if granularity == Granularity.DAY else 1),
          kwargs=dict(grouped_census=grouped_census,
                      flux=flux,
@@ -64,7 +65,7 @@ district_names = grouped_census.index.to_list()
 delta = .5
 rho = 1
 gamma = (1 / 1.8)
-mu = np.log(args.R0)*.6
+mu = np.log(args.R0) * .6
 baseline_model = SEVIRDModel(delta, args.R0, rho, gamma, district_names, grouped_census, flux, mu, sde=False)
 (baseline_pd, baseline_ar, _) = run_model(baseline_model, n_weeks, weekends, args.district_name, no_closures)
 
