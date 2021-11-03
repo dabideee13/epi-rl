@@ -29,13 +29,13 @@ from epcontrol.UK_SEIR_Eames import UK
 from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWrapper
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
+parser.add_argument("--R0", type=float, required=True)
 parser.add_argument("--district_name", required=True)
 parser.add_argument("--budget_in_weeks", type=int, required=True)
 parser.add_argument("--census", type=Path, required=True)
-parser.add_argument("--R0", type=float, required=True)
 parser.add_argument("--runs", type=int, required=True)
-parser.add_argument("--path", type=Path, required=True)
 parser.add_argument("--outcome", choices=["ar", "pd"], required=True)
+parser.add_argument("--path", type=Path, required=True)
 
 args = parser.parse_args()
 
