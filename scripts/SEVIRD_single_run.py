@@ -44,24 +44,6 @@ flux = flux.SingleDistrictStub(args.district_name)
 grouped_census = pd.read_csv(args.census, index_col=0)
 grouped_census = grouped_census.filter(items=[args.district_name], axis=0)
 
-register(id="SEVIRDsingle-v0",
-         entry_point="epcontrol.SEVIRD_environment:SEVIRDEnvironment",
-         max_episode_steps=n_weeks * (7 if granularity == Granularity.DAY else 1),
-         kwargs=dict(grouped_census=grouped_census,
-                     flux=flux,
-                     r0=args.R0,
-                     n_weeks=(n_weeks * 2),
-                     step_granularity=granularity,
-                     model_seed=args.district_name,
-                     budget_per_district_in_weeks=args.budget_in_weeks))
-
-env = make("SEVIRDsingle-v0")
-env = NormalizedObservationWrapper(env)
-env = NormalizedRewardWrapper(env)
-
-no_closures = [1] * n_weeks
-weekends = False
-district_names = grouped_census.index.to_list()
 delta = .5
 rho = 1
 gamma = (1 / 1.8)
@@ -71,6 +53,34 @@ eta = 0.5
 c_v = 0.3
 alpha = 0.32
 zeta = 0.333
+
+register(id="SEVIRDsingle-v0",
+         entry_point="epcontrol.SEVIRD_environment:SEVIRDEnvironment",
+         max_episode_steps=n_weeks * (7 if granularity == Granularity.DAY else 1),
+         kwargs=dict(grouped_census=grouped_census,
+                     flux=flux,
+                     r0=args.R0,
+                     n_weeks=(n_weeks * 2),
+                     step_granularity=granularity,
+                     model_seed=args.district_name,
+                     budget_per_district_in_weeks=args.budget_in_weeks,
+                     delta=delta,
+                     rho=rho,
+                     gamma=gamma,
+                     mu=mu,
+                     sde=sde,
+                     eta=eta,
+                     c_v=c_v,
+                     alpha=alpha,
+                     zeta=zeta))
+
+env = make("SEVIRDsingle-v0")
+env = NormalizedObservationWrapper(env)
+env = NormalizedRewardWrapper(env)
+
+no_closures = [1] * n_weeks
+weekends = False
+district_names = grouped_census.index.to_list()
 
 baseline_model = SEVIRDModel(delta, args.R0, rho, gamma, district_names, grouped_census, flux, mu, sde, eta, c_v, alpha, zeta)
 (baseline_pd, baseline_ar, _) = run_model(baseline_model, n_weeks, weekends, args.district_name, no_closures)

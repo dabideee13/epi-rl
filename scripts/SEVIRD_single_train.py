@@ -19,6 +19,7 @@ import datetime
 import os
 from pathlib import Path
 
+import numpy as np
 import tensorflow as tf
 from gym.envs.registration import register, make
 import pandas as pd
@@ -28,8 +29,7 @@ from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import PPO2
 
 import epcontrol.census.Flux as flux
-from epcontrol.seir_environment import Granularity
-from epcontrol.seir_environment import Outcome
+from epcontrol.SEVIRD_environment import Granularity, Outcome
 from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWrapper
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
@@ -75,19 +75,37 @@ if args.outcome == "ar":
 elif args.outcome == "pd":
     outcome = Outcome.PEAK_DAY
 
-register(id="SEIRsingle-v0",
-         entry_point="epcontrol.seir_environment:SEIREnvironment",
+delta = .5
+rho = 1
+gamma = (1 / 1.8)
+mu = np.log(args.R0) * .6
+sde = False
+eta = 0.5
+c_v = 0.3
+alpha = 0.32
+zeta = 0.333
+
+register(id="SEVIRDsingle-v0",
+         entry_point="epcontrol.SEVIRD_environment:SEVIRDEnvironment",
          max_episode_steps=n_weeks * (7 if granularity == Granularity.DAY else 1),
          kwargs=dict(grouped_census=grouped_census,
                      flux=flux,
                      r0=args.R0,
-                     n_weeks=n_weeks,
+                     n_weeks=(n_weeks * 2),
                      step_granularity=granularity,
-                     outcome=outcome,
                      model_seed=args.district_name,
-                     budget_per_district_in_weeks=args.budget_in_weeks))
+                     budget_per_district_in_weeks=args.budget_in_weeks,
+                     delta=delta,
+                     rho=rho,
+                     gamma=gamma,
+                     mu=mu,
+                     sde=sde,
+                     eta=eta,
+                     c_v=c_v,
+                     alpha=alpha,
+                     zeta=zeta))
 
-env = make("SEIRsingle-v0")
+env = make("SEVIRDsingle-v0")
 env = NormalizedObservationWrapper(env)
 if args.outcome == "ar":
     env = NormalizedRewardWrapper(env)
