@@ -107,7 +107,6 @@ weekends = False
 district_names = grouped_census.index.to_list()
 
 baseline_model = SEVIRDModel(delta, args.R0, rho, gamma, district_names, grouped_census, flux, mu, sde, eta, c_v, alpha, zeta)
-# TODO: Debug run_model
 (baseline_pd, baseline_ar, _) = run_model(baseline_model, n_weeks, weekends, args.district_name, no_closures)
 
 # TODO: Why is it that PPO model is not loaded in the run_model and only here?

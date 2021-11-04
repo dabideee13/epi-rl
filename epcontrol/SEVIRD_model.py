@@ -239,12 +239,6 @@ def _step(
         Rs = seir_state[sparked_districts_indices, Compartment.R.value]
         Ds = seir_state[sparked_districts_indices, Compartment.D.value]
 
-        # FIXME: Add hard-coded parameters in model parameters
-        # eta = 1
-        # c_v = 1
-        # alpha = 1
-        # zeta = 1
-
         # Force of infection
         SEs = np.expand_dims(betas[sparked_districts_indices], axis=1) * weighted_inf_sums * Ss
 
