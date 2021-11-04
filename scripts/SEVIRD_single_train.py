@@ -66,7 +66,6 @@ granularity = Granularity.WEEK
 
 flux = flux.SingleDistrictStub(args.district_name)
 grouped_census = pd.read_csv(args.census, index_col=0)
-
 grouped_census = grouped_census.filter(items=[args.district_name], axis=0)
 
 outcome = None
