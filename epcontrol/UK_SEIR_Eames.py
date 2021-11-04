@@ -190,6 +190,7 @@ def _step(school_states,
     sparked_districts_cms[sparked_closed_cms_indices] = cms_no_school[sparked_closed_cms_indices]
 
     n_sparked = len(sparked_districts_indices)
+    # NOTE: 4 here is number of age groups
     weighted_inf_sums = np.empty((len(sparked_districts_indices), 4), dtype=np.float32)
     for sde_step in range(sde_steps):
         #matrix, with for each sparked district (row) the relative infected for all the age groups (column)
