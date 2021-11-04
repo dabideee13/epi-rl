@@ -60,6 +60,8 @@ class SEVIRDModel:
             self.cms_school[i] = make_reciprocal(cm_school, row)
             self.cms_no_school[i] = make_reciprocal(cm_no_school, row)
 
+        if mu is None:
+            mu = np.log(R0) * .6
         self.mu = mu
 
         self.sde = sde
@@ -97,6 +99,7 @@ class SEVIRDModel:
         self.adult_susceptibles = self.districts_susceptibles[:, Eames2012.Adults.value]
 
         self.seir_state[:, Compartment.S.value, :] = self.districts_susceptibles
+        # TODO: Why multiply by (10 ** -6)
         self.seir_state[:, Compartment.E.value, :] = self.seir_state[:, Compartment.S.value, :] * 10 ** -6
 
     @property
@@ -108,6 +111,8 @@ class SEVIRDModel:
 
     def reset(self) -> None:
         self.seir_state[:, Compartment.S.value, :] = self.districts_susceptibles
+
+        # TODO: Why multiply with (10 ** -6)?
         self.seir_state[:, Compartment.E.value, :] = self.seir_state[:, Compartment.S.value, :] * 10 ** -6
         self.seir_state[:, [Compartment.I.value, Compartment.R.value], :] = 0
         self.districts_school_states.fill(1)
@@ -142,7 +147,8 @@ class SEVIRDModel:
         sparked_districts_indices = self.districts_sparked.nonzero()[0]
 
         if not self.sde:
-            W = np.zeros((self.sde_steps, len(sparked_districts_indices), 3, self.n_age_groups))
+            # NOTE: The `W` here is the number of transitions in the compartments.
+            W = np.zeros((self.sde_steps, len(sparked_districts_indices), 6, self.n_age_groups))
 
         else:
             W = np.random.standard_normal((self.sde_steps, len(sparked_districts_indices), 3, self.n_age_groups))
@@ -217,6 +223,7 @@ def _step(
     sparked_districts_cms[sparked_closed_cms_indices] = cms_no_school[sparked_closed_cms_indices]
 
     n_sparked = len(sparked_districts_indices)
+    # NOTE: 4 here is the number of age groups
     weighted_inf_sums = np.empty((len(sparked_districts_indices), 4), dtype=np.float32)
     for sde_step in range(sde_steps):
         # matrix, with for each sparked district (row) the relative infected for all the age groups (column)
@@ -238,14 +245,16 @@ def _step(
         # alpha = 1
         # zeta = 1
 
-        # FIXME: change rho to zeta
+        # Force of infection
         SEs = np.expand_dims(betas[sparked_districts_indices], axis=1) * weighted_inf_sums * Ss
+
         EVs = rho * Es
         VEs = eta * Vs
         EIs = ((1 - rho) * Es) + (c_v * Es)
         IRs = (gamma * Is) + (alpha * Is)
         IDs = zeta * Is
 
+        # Stochastic transformation
         d_SEs = delta * SEs + np.sqrt(delta * SEs) * W[sde_step][:, 0]
         d_EVs = delta * EVs + np.sqrt(delta * EVs) * W[sde_step][:, 1]
         d_VEs = delta * VEs + np.sqrt(delta * VEs) * W[sde_step][:, 2]
