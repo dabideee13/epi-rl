@@ -1,5 +1,5 @@
 General:
-TODO: Remove default values in the parameters
+TODO: Remove default values in the parameters<br>
 TODO: Study ODE to SDE transformation to understand `W` in step method
 
 Rewards:
