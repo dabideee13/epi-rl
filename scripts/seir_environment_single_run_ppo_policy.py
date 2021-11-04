@@ -83,7 +83,7 @@ delta = .5
 rho = 1
 gamma = (1 / 1.8)
 mu = np.log(args.R0)*.6
-baseline_model = UK(delta, args.R0, rho, gamma, district_names, grouped_census, flux, mu, sde=False)
+baseline_model = UK(delta, args.R0, rho, gamma, district_names, grouped_census, flux, mu, sde=True)
 (baseline_pd, baseline_ar, _) = run_model(baseline_model, n_weeks, weekends, args.district_name, no_closures)
 
 
