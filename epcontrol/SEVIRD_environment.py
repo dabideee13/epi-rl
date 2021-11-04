@@ -42,20 +42,20 @@ class SEVIRDEnvironment(Env):
                  flux: Flux,
                  r0: float,
                  n_weeks: int,
-                 rho: Optional[float] = 1,
-                 gamma: Optional[float] = (1 / 1.8),
-                 delta: Optional[float] = 0.5,
+                 rho: float,
+                 gamma: float,
+                 delta: float,
+                 outcome: Outcome,
+                 step_granularity: Granularity,
+                 model_seed: str,
+                 eta: float,
+                 c_v: float,
+                 alpha: float,
+                 zeta: float,
                  mu: Optional[float] = None,
                  sde: Optional[bool] = True,
-                 outcome: Optional[Outcome] = Outcome.ATTACK_RATE,
-                 step_granularity: Optional[Granularity] = Granularity.WEEK,
                  budget_per_district_in_weeks: Optional[int] = None,
-                 model_seed: Optional[str] = "Greenwich",
-                 seed: Optional[int] = None,
-                 eta: float = 1,
-                 c_v: float = 1,
-                 alpha: float = 1,
-                 zeta: float = 1) -> None:
+                 seed: Optional[int] = None) -> None:
         super().__init__()
 
         if mu is None:
