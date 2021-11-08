@@ -1,0 +1,72 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Run SEIR",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/seir_environment_single_run_ppo_policy.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--R0", "1.8",
+                "--district_name", "Greenwich",
+                "--budget_in_weeks", "2",
+                "--census", "./data/great_brittain/census.csv",
+                "--runs", "10",
+                "--outcome", "ar",
+                "--path", "${workspaceFolder}/model/weights/weights_SEIR"
+            ]
+        },
+        {
+            "name": "Python: Train SEIR",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/seir_environment_single_sb_ppo.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--R0", "1.8",
+                "--district_name", "Greenwich",
+                "--budget_in_weeks", "2",
+                "--census", "./data/great_brittain/census.csv",
+                "--total_timesteps", "1000000",
+                "--outcome", "ar",
+                "--monitor_path", "${workspaceFolder}/model/weights/weights_SEIR"
+            ]
+        },
+        {
+            "name": "Python: Run SEVIRD",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/SEVIRD_single_run.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--R0", "1.8",
+                "--district_name", "Greenwich",
+                "--budget_in_weeks", "2",
+                "--census", "./data/great_brittain/census.csv",
+                "--runs", "10",
+                "--outcome", "ar",
+                "--path", "${workspaceFolder}/model/weights/weights_SEVIRD"
+            ]
+        },
+        {
+            "name": "Python: Train SEVIRD",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/SEVIRD_single_train.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--R0", "1.8",
+                "--district_name", "Greenwich",
+                "--budget_in_weeks", "2",
+                "--census", "./data/great_brittain/census.csv",
+                "--total_timesteps", "1000000",
+                "--outcome", "ar",
+                "--monitor_path", "${workspaceFolder}/model/weights/weights_SEVIRD"
+            ]
+        },
+    ]
+}
