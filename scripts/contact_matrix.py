@@ -16,16 +16,22 @@ class ContactMatrix:
         self._other_location = self._read_data("other_location")
         self._home = self._read_data("Home")
 
-    @property
-    def _full_path(self) -> Path:
-        return Path.joinpath(Path.cwd(), 'data/contacts', self._filename)
+    def _get_path(self, root: Path) -> Path:
+        return Path.joinpath(root, 'data/contacts', self._filename)
 
     def _read_data(self, sheet_name: str = 'All_location') -> pd.DataFrame:
-        return pd.read_excel(
-            str(self._full_path),
-            sheet_name,
-            index_col="Ages"
-        )
+
+        def reader(path: Path) -> pd.DataFrame:
+            return pd.read_excel(
+                str(path),
+                sheet_name,
+                index_col="Ages"
+            )
+
+        try:
+            return reader(self._get_path(Path.cwd()))
+        except FileNotFoundError:
+            return reader(self._get_path(Path.cwd().parent))
 
     def _return_zero(self, df: pd.DataFrame, mode: List[str]) -> pd.DataFrame:
         _df = df.copy(deep=True)
