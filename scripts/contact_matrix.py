@@ -1,10 +1,14 @@
 """Generate contact matrices for different actions (quarantine levels)."""
 
-from typing import List, Any, Dict, Tuple
+import os
+from typing import List, Any, Dict, Tuple, Union
 import itertools
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
+
+from epcontrol.compartments.contacts.Eames2012 import read_contact_matrix
 
 
 class ContactMatrix:
@@ -79,7 +83,10 @@ class ContactMatrix:
             self._work = self._return_zero(self._work, not_allowed_work)
 
         if not_allowed_other:
-            self._other_location = self._return_zero(self._other_location, not_allowed_other)
+            self._other_location = self._return_zero(
+                self._other_location,
+                not_allowed_other
+            )
 
         if not_allowed_school:
             self._school = self._return_zero(self._school, not_allowed_school)
@@ -97,10 +104,22 @@ class ContactMatrix:
 
         return contact
 
-    def _cm_mean(self, first_group: List[str], second_group: List[str]) -> float:
-        return self.contact_matrix_raw[first_group].loc[second_group].mean().mean()
+    def _cm_mean(
+        self,
+        first_group: List[str],
+        second_group: List[str]
+    ) -> float:
+        return (
+            self.contact_matrix_raw[first_group]
+            .loc[second_group]
+            .mean()
+            .mean()
+        )
 
-    def contact_matrix(self, cm_indices: Dict[str, List[str]]) -> pd.DataFrame:
+    def get_contact_matrix(
+        self,
+        cm_indices: Dict[str, List[str]]
+    ) -> pd.DataFrame:
 
         indices_combinations: Tuple[str, str] = list(
             itertools.product(cm_indices.keys(), repeat=2)
@@ -121,7 +140,7 @@ class ContactMatrix:
         return pd.DataFrame(contact_matrix, index=contact_matrix.keys())
 
 
-class AgeGroup:
+class CMAgeGroup:
 
     def _increment(self, ages: str) -> str:
         left, right = ages.split(sep='-')
@@ -146,10 +165,36 @@ class AgeGroup:
         return groups
 
 
-if __name__ == '__main__':
+class CMGetter:
+    """Contact matrices retriever"""
+
+    def __init__(self, cm_path: Union[Path, str]) -> None:
+        self._cm_path = cm_path
+        self._files = self._get_files()
+        self._names = self._get_names()
+        self._contact_matrices = self._get_contact_matrices()
+
+    @property
+    def contact_matrices(self) -> Dict[str, np.ndarray]:
+        return self._contact_matrices
+
+    def _get_files(self) -> List[str]:
+        return [file for file in os.listdir(self._cm_path) if '.csv' in file]
+
+    def _get_names(self) -> List[str]:
+        return [Path(file).stem for file in self._files]
+
+    def _get_contact_matrices(self) -> Dict[str, np.ndarray]:
+        return {
+            name: read_contact_matrix(self._cm_path / file)
+            for name, file in zip(self._names, self._files)
+        }
+
+
+def main():
 
     # Define age groups
-    cm = AgeGroup()
+    cm = CMAgeGroup()
     children = cm.ages(0, 5)
     adolescents = cm.ages(5, 20)
     adults = cm.ages(20, 65)
@@ -163,4 +208,16 @@ if __name__ == '__main__':
     }
 
     contact_matrix = ContactMatrix()
-    print(contact_matrix.contact_matrix(cm_indices))
+    print(contact_matrix.get_contact_matrix(cm_indices))
+
+    cm_path = Path('/home/ubuntu/Temporary/epi-rl/data/contacts')
+    contact_matrices = CMGetter(cm_path)
+    print(contact_matrices.contact_matrices)
+
+
+if __name__ == '__main__':
+    main()
+
+
+# TODO: Add export function
+# TODO: Add file manager of directories function
