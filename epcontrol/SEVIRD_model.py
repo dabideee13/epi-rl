@@ -147,11 +147,12 @@ class SEVIRDModel:
         sparked_districts_indices = self.districts_sparked.nonzero()[0]
 
         if not self.sde:
-            # NOTE: The `W` here is the number of transitions in the compartments.
+            # FIXME: Fix this hard-coded parameter `6`
             W = np.zeros((self.sde_steps, len(sparked_districts_indices), 6, self.n_age_groups))
 
         else:
-            W = np.random.standard_normal((self.sde_steps, len(sparked_districts_indices), 3, self.n_age_groups))
+            # FIXME: Fix this hard-coded parameter `6`
+            W = np.random.standard_normal((self.sde_steps, len(sparked_districts_indices), 6, self.n_age_groups))
 
         return _step(
             school_states,
