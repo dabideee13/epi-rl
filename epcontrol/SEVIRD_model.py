@@ -148,10 +148,12 @@ class SEVIRDModel:
 
         if not self.sde:
             # FIXME: Fix this hard-coded parameter `6`
+            # NOTE: `6` here is the number of transitions between compartments
             W = np.zeros((self.sde_steps, len(sparked_districts_indices), 6, self.n_age_groups))
 
         else:
             # FIXME: Fix this hard-coded parameter `6`
+            # NOTE: `6` here is the number of transitions between compartments
             W = np.random.standard_normal((self.sde_steps, len(sparked_districts_indices), 6, self.n_age_groups))
 
         return _step(
