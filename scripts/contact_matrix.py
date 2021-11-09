@@ -1,7 +1,8 @@
 """Generate contact matrices for different actions (quarantine levels)."""
 
+from typing import List, Any, Dict, Tuple
+import itertools
 from pathlib import Path
-from typing import List
 
 import pandas as pd
 
@@ -9,12 +10,17 @@ import pandas as pd
 class ContactMatrix:
     """Contact matrix generator"""
 
-    def __init__(self) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         self._filename = "Social_contact_matrices_Philippines.xlsx"
         self._school = self._read_data("School")
         self._work = self._read_data("Work")
         self._other_location = self._read_data("other_location")
         self._home = self._read_data("Home")
+        self._contact_matrix_raw = self._get_contact(**kwargs)
+
+    @property
+    def contact_matrix_raw(self) -> pd.DataFrame:
+        return self._contact_matrix_raw
 
     def _get_path(self, root: Path) -> Path:
         return Path.joinpath(root, 'data/contacts', self._filename)
@@ -39,10 +45,15 @@ class ContactMatrix:
         _df.loc[mode] = 0
         return _df
 
-    def _compute_contact(self, df: pd.DataFrame, prop: float, sd: float) -> pd.DataFrame:
+    def _compute_contact(
+        self,
+        df: pd.DataFrame,
+        prop: float,
+        sd: float
+    ) -> pd.DataFrame:
         return (prop - (prop * sd)) * df
 
-    def get_contact(
+    def _get_contact(
         self,
         home: bool = True,
         prop_work: float = 1.0,
@@ -86,7 +97,70 @@ class ContactMatrix:
 
         return contact
 
+    def _cm_mean(self, first_group: List[str], second_group: List[str]) -> float:
+        return self.contact_matrix_raw[first_group].loc[second_group].mean().mean()
+
+    def contact_matrix(self, cm_indices: Dict[str, List[str]]) -> pd.DataFrame:
+
+        indices_combinations: Tuple[str, str] = list(
+            itertools.product(cm_indices.keys(), repeat=2)
+        )
+
+        contact_matrix: Dict[str, list] = {
+            combination[0]: list() for combination in indices_combinations
+        }
+
+        for combination in indices_combinations:
+            contact_matrix[combination[0]].append(
+                self._cm_mean(
+                    cm_indices[combination[0]],
+                    cm_indices[combination[1]]
+                )
+            )
+
+        return pd.DataFrame(contact_matrix, index=contact_matrix.keys())
+
+
+class AgeGroup:
+
+    def _increment(self, ages: str) -> str:
+        left, right = ages.split(sep='-')
+        new_left, new_right = int(left) + 5, int(right) + 5
+        return f'{new_left}-{new_right}'
+
+    def _form_group(self, first) -> str:
+        last = int(first) + 5
+        return f'{first}-{last}'
+
+    def ages(self, first, last) -> List[str]:
+
+        group = self._form_group(first)
+        last_index = group.split(sep='-')[1]
+        groups = [group]
+
+        while int(last_index) != last:
+            groups.append(self._increment(group))
+            group = self._increment(group)
+            last_index = group.split(sep='-')[1]
+
+        return groups
+
 
 if __name__ == '__main__':
+
+    # Define age groups
+    cm = AgeGroup()
+    children = cm.ages(0, 5)
+    adolescents = cm.ages(5, 20)
+    adults = cm.ages(20, 65)
+    elderly = cm.ages(65, 80)
+
+    cm_indices = {
+        'children': children,
+        'adolescents': adolescents,
+        'adults': adults,
+        'elderly': elderly
+    }
+
     contact_matrix = ContactMatrix()
-    print(contact_matrix.get_contact())
+    print(contact_matrix.contact_matrix(cm_indices))
