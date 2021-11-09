@@ -14,7 +14,6 @@ Model:<br>
 
 Actions:<br>
 - TODO: Generate contact matrices for 6 possible actions (ECQ, MECQ, GCQ, MGCQ, open, close)
-- TODO: Add functionality for different age groups
 
 Observations:<br>
 - TODO: Add a decorator for unnormalizing observations
