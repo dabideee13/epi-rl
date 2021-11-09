@@ -15,7 +15,7 @@
 # with this program; if not, write to pieter.libin@ai.vub.ac.be or arno.moonens@vub.be.
 
 from pathlib import Path
-from typing import List, Sequence
+from typing import List, Sequence, Dict, Optional
 from numba import njit
 import numpy as np
 from scipy.signal import savgol_filter
@@ -41,7 +41,8 @@ class SEVIRDModel:
         eta: float,
         c_v: float,
         alpha: float,
-        zeta: float
+        zeta: float,
+        contact_matrices: Optional[Dict[str, np.ndarray]] = None
     ) -> None:
 
         self.delta = delta
@@ -50,10 +51,12 @@ class SEVIRDModel:
 
         self.ag = Eames2012
         self.n_age_groups = len(age_ranges(self.ag))
+
         cm_path = Path(__file__).resolve().parent.parent / "data/contacts"
         cm_school = read_contact_matrix(cm_path / "conversational_school.csv")
         cm_no_school = read_contact_matrix(cm_path / "conversational_no_school.csv")
 
+        # TODO: Create initializer for contact matrices
         self.cms_school = np.empty((self.n_districts, self.n_age_groups, self.n_age_groups), dtype=np.float32)
         self.cms_no_school = np.empty((self.n_districts, self.n_age_groups, self.n_age_groups), dtype=np.float32)
         for i, (_, row) in enumerate(grouped_census.iterrows()):

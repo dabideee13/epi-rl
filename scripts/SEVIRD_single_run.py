@@ -27,6 +27,7 @@ import epcontrol.census.Flux as flux
 from epcontrol.SEVIRD_environment import Granularity, Outcome
 from epcontrol.UK_RL_school_weekly import run_model
 from epcontrol.SEVIRD_model import SEVIRDModel
+from epcontrol.contact_matrix import CMGetter
 from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWrapper
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
@@ -77,26 +78,34 @@ zeta = 0.333
 mu = np.log(args.R0) * .6
 sde = True
 
-register(id="SEVIRDsingle-v0",
-         entry_point="epcontrol.SEVIRD_environment:SEVIRDEnvironment",
-         max_episode_steps=n_weeks * (7 if granularity == Granularity.DAY else 1),
-         kwargs=dict(grouped_census=grouped_census,
-                     flux=flux,
-                     r0=args.R0,
-                     n_weeks=(n_weeks * 2),
-                     rho=rho,
-                     gamma=gamma,
-                     delta=delta,
-                     outcome=outcome,
-                     step_granularity=granularity,
-                     model_seed=args.district_name,
-                     eta=eta,
-                     c_v=c_v,
-                     alpha=alpha,
-                     zeta=zeta,
-                     mu=mu,
-                     sde=sde,
-                     budget_per_district_in_weeks=args.budget_in_weeks))
+cm_path = Path('/home/ubuntu/Temporary/epi-rl/data/contacts')
+contact_matrices = CMGetter(cm_path).contact_matrices
+
+register(
+    id="SEVIRDsingle-v0",
+    entry_point="epcontrol.SEVIRD_environment:SEVIRDEnvironment",
+    max_episode_steps=n_weeks * (7 if granularity == Granularity.DAY else 1),
+    kwargs=dict(
+        grouped_census=grouped_census,
+        flux=flux,
+        r0=args.R0,
+        n_weeks=(n_weeks * 2),
+        rho=rho,
+        gamma=gamma,
+        delta=delta,
+        outcome=outcome,
+        step_granularity=granularity,
+        model_seed=args.district_name,
+        eta=eta,
+        c_v=c_v,
+        alpha=alpha,
+        zeta=zeta,
+        mu=mu,
+        sde=sde,
+        budget_per_district_in_weeks=args.budget_in_weeks,
+        contact_matrices=contact_matrices
+    )
+)
 
 env = make("SEVIRDsingle-v0")
 env = NormalizedObservationWrapper(env)

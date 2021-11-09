@@ -37,25 +37,28 @@ class Outcome(Enum):
 
 class SEVIRDEnvironment(Env):
     """SEVIRD environment."""
-    def __init__(self,
-                 grouped_census: pd.DataFrame,
-                 flux: Flux,
-                 r0: float,
-                 n_weeks: int,
-                 rho: float,
-                 gamma: float,
-                 delta: float,
-                 outcome: Outcome,
-                 step_granularity: Granularity,
-                 model_seed: str,
-                 eta: float,
-                 c_v: float,
-                 alpha: float,
-                 zeta: float,
-                 mu: Optional[float] = None,
-                 sde: Optional[bool] = True,
-                 budget_per_district_in_weeks: Optional[int] = None,
-                 seed: Optional[int] = None) -> None:
+    def __init__(
+        self,
+        grouped_census: pd.DataFrame,
+        flux: Flux,
+        r0: float,
+        n_weeks: int,
+        rho: float,
+        gamma: float,
+        delta: float,
+        outcome: Outcome,
+        step_granularity: Granularity,
+        model_seed: str,
+        eta: float,
+        c_v: float,
+        alpha: float,
+        zeta: float,
+        mu: Optional[float] = None,
+        sde: Optional[bool] = True,
+        budget_per_district_in_weeks: Optional[int] = None,
+        seed: Optional[int] = None,
+        contact_matrices: Optional[Dict[str, np.ndarray]] = None
+    ) -> None:
         super().__init__()
 
         if mu is None:
@@ -68,7 +71,7 @@ class SEVIRDEnvironment(Env):
 
         self.start_budget_per_district_in_weeks = budget_per_district_in_weeks
         self._model_params = [delta, r0, rho, gamma, district_names, grouped_census,
-                              flux, mu, sde, eta, c_v, alpha, zeta]
+                              flux, mu, sde, eta, c_v, alpha, zeta, contact_matrices]
         self._model_seed = model_seed
         self._model = self._make_model()
         self._total_susceptibles = self._model.total_susceptibles()
@@ -132,7 +135,6 @@ class SEVIRDEnvironment(Env):
         model = SEVIRDModel(*self._model_params)
         model.seed(self._model_seed)
         return model
-
 
     def _get_obs(self) -> np.ndarray:
         """Get an observation from the environment.
