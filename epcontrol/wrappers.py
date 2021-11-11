@@ -228,3 +228,22 @@ class NormalizedRewardWrapper(RewardWrapper):
 
     def reward(self, rew):
         return (rew - self.low) / (self.high - self.low)
+
+
+class UnnormalizedObservationWrapper(ObservationWrapper):
+
+    def __init__(self, env):
+        super(UnnormalizedObservationWrapper, self).__init__(env)
+        if not isinstance(self.env.observation_space, Box):
+            raise AssertionError(
+                "This wrapper can only be applied to environments with a continuous observation space.")
+        if np.inf in self.env.observation_space.low or np.inf in self.env.observation_space.high:
+            raise AssertionError(
+                "This wrapper cannot be used for observation spaces with an infinite lower/upper bound.")
+        self.observation_space: Box = Box(
+            low=np.zeros(self.env.observation_space.shape),
+            high=np.ones(self.env.observation_space.shape)
+        )
+
+    def observation(self, normalized_observation: np.ndarray) -> np.ndarray:
+        return normalized_observation * (self.env.observation_space.high - self.env.observation_space.low) + self.env.observation_space.low
