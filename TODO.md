@@ -3,6 +3,7 @@ General:<br>
 - TODO: Prepare census data for Iligan City
 - TODO: Find mobility data for multi-agents
 - TODO: Use **kwargs in the parameters
+- FIXME: Add versions in requirements.txt
 
 Rewards:<br>
 - TODO: Make a reward function that involves vaccination<br>
@@ -11,6 +12,9 @@ Rewards:<br>
 
 Model:<br>
 - TODO: Estimate values for model parameters<br>
+
+Model parameters:<br>
+- FIXME: Determine the "right" values for latency rate. Is it valid to have a latency rate from `Exposed` to `Vaccinated` compartment?
 
 Actions:<br>
 - TODO: Generate contact matrices for 6 possible actions (ECQ, MECQ, GCQ, MGCQ, open, close)
