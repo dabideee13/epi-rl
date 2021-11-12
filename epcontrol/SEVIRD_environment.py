@@ -141,8 +141,10 @@ class SEVIRDEnvironment(Env):
         Return a copy of the model state to avoid references to the same array,
         which can change at every step.
         """
+        # NOTE: this method adds budget to the states
         to_concat = [np.reshape(self._model.seir_state, (self.n_districts, -1))]
         if self.start_budget_per_district_in_weeks is not None:
+            # TODO: What's this?
             clip_max = self.n_weeks * (7 if self.step_granularity == Granularity.DAY else 1)
             clipped_budgets = np.clip(self.budgets, 0, clip_max)
             to_concat.append(np.expand_dims(clipped_budgets, axis=1))
