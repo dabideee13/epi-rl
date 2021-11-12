@@ -115,9 +115,10 @@ class SEVIRDModel:
     def reset(self) -> None:
         self.seir_state[:, Compartment.S.value, :] = self.districts_susceptibles
 
+        # FIXME: Hard-coded reset depending on compartments
         # TODO: Why multiply with (10 ** -6)?
         self.seir_state[:, Compartment.E.value, :] = self.seir_state[:, Compartment.S.value, :] * 10 ** -6
-        self.seir_state[:, [Compartment.I.value, Compartment.R.value], :] = 0
+        self.seir_state[:, [Compartment.V.value, Compartment.I.value, Compartment.R.value, Compartment.D.value], :] = 0
         self.districts_school_states.fill(1)
         self.districts_sparked.fill(0)
         self.districts_lambda.fill(0)
@@ -185,7 +186,7 @@ class SEVIRDModel:
         )
 
 
-@njit(cache=True)
+# @njit(cache=True)
 def _step(
     school_states,
     seir_state,
@@ -220,6 +221,7 @@ def _step(
     # Overwrite school states with new ones
     districts_school_states[:] = school_states
 
+    # FIXME: If more contact matrices will be added, fix here
     # for all sparked districts,
     # keep the CM (sparked_districts_cms), which depends on whether the schools are open
     sparked_open_cms_indices = (districts_school_states[sparked_districts_indices] == 1).nonzero()[0]
@@ -238,6 +240,7 @@ def _step(
         for idx in range(n_sparked):
             weighted_inf_sums[idx] = np.dot(sparked_districts_cms[idx], sparked_districts_ags_relative_I[idx])
 
+        # FIXME: Something's wrong here
         Ss = seir_state[sparked_districts_indices, Compartment.S.value]
         Es = seir_state[sparked_districts_indices, Compartment.E.value]
         Vs = seir_state[sparked_districts_indices, Compartment.V.value]
