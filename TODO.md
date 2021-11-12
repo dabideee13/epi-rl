@@ -25,3 +25,9 @@ Observations:<br>
 
 Simulation:<br>
 - TODO: Try different scenarios
+
+Flow:<br>
+- TODO: Extract observations first, then fix the zero values later.
+- TODO: Continue with contact matrices handler
+- TODO: Try with random values first
+- TODO: Estimate model parameters
