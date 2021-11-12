@@ -29,6 +29,7 @@ from epcontrol.SEVIRD_environment import Granularity, Outcome
 from epcontrol.UK_RL_school_weekly import run_model
 from epcontrol.SEVIRD_model import SEVIRDModel
 from epcontrol.contact_matrix import CMGetter
+from epcontrol.utils import export_states
 from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWrapper, UnnormalizedObservationWrapper
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
@@ -144,8 +145,6 @@ for run in range(args.runs):
     all_states.append(states)
 
 # Export states to csv file
-with open('states.csv', 'w') as f:
-    write = csv.writer(f)
-    write.writerow(states)
+export_states(states)
 
 env.close()
