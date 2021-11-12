@@ -16,6 +16,7 @@
 
 import argparse
 from pathlib import Path
+import csv
 
 from gym.envs.registration import register, make
 import numpy as np
@@ -28,7 +29,7 @@ from epcontrol.SEVIRD_environment import Granularity, Outcome
 from epcontrol.UK_RL_school_weekly import run_model
 from epcontrol.SEVIRD_model import SEVIRDModel
 from epcontrol.contact_matrix import CMGetter
-from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWrapper
+from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWrapper, UnnormalizedObservationWrapper
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
 parser.add_argument("--R0", type=float, required=True)
@@ -53,13 +54,17 @@ def evaluate(env, model, num_steps):
     _model = env.unwrapped._model
     obs = env.reset()
     sus_before = _model.total_susceptibles()
+
+    states = list()
     for _ in range(num_steps):
         action, _states = model.predict(obs)
+        # FIXME: no values for other compartments
         obs, _, _, _ = env.step(action)
+        states.append(obs)
     sus_after = _model.total_susceptibles()
     attack_rate = 1.0 - (sus_after / sus_before)
     peak_day = _model.peak_day(env.unwrapped.infected_history)
-    return (attack_rate, peak_day, env.unwrapped.infected_history)
+    return attack_rate, peak_day, env.unwrapped.infected_history, states
 
 
 n_weeks = 43
@@ -68,18 +73,21 @@ flux = flux.SingleDistrictStub(args.district_name)
 grouped_census = pd.read_csv(args.census, index_col=0)
 grouped_census = grouped_census.filter(items=[args.district_name], axis=0)
 
+# TODO: if some compartments are still zeros, try increasing the values here related to the compartments
 delta = .5
 rho = 1
 gamma = (1 / 1.8)
 eta = 0.5
-c_v = 0.3
+c_v = 0.1568
 alpha = 0.32
 zeta = 0.333
 mu = np.log(args.R0) * .6
 sde = True
 
-cm_path = Path('/home/ubuntu/Temporary/epi-rl/data/contacts')
-contact_matrices = CMGetter(cm_path).contact_matrices
+# FIXME:
+# cm_path = Path('/home/ubuntu/Temporary/epi-rl/data/contacts')
+# contact_matrices = CMGetter(cm_path).contact_matrices
+contact_matrices = None
 
 register(
     id="SEVIRDsingle-v0",
@@ -110,6 +118,8 @@ register(
 env = make("SEVIRDsingle-v0")
 env = NormalizedObservationWrapper(env)
 env = NormalizedRewardWrapper(env)
+# FIXME:
+# env = UnnormalizedObservationWrapper(env)
 
 no_closures = [1] * n_weeks
 weekends = False
@@ -121,13 +131,21 @@ baseline_model = SEVIRDModel(delta, args.R0, rho, gamma, district_names, grouped
 # TODO: Why is it that PPO model is not loaded in the run_model and only here?
 model = PPO2.load(args.path / "params.zip")
 print(args.outcome + "-improvement")
+
+all_states = list()
 for run in range(args.runs):
     # TODO: Know the difference between baseline_ar and attack_rate and why
     # TODO: What's the purpose of evaluate?
-    (attack_rate, peak_day, inf) = evaluate(env, model, n_weeks)
+    attack_rate, peak_day, inf, states = evaluate(env, model, n_weeks)
     if args.outcome == "ar":
         print(baseline_ar - attack_rate)
     elif args.outcome == "pd":
         print(peak_day - baseline_pd)
+    all_states.append(states)
+
+# Export states to csv file
+with open('states.csv', 'w') as f:
+    write = csv.writer(f)
+    write.writerow(states)
 
 env.close()
