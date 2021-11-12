@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to pieter.libin@ai.vub.ac.be or arno.moonens@vub.be.
 
+import csv
 import argparse
 from pathlib import Path
 
@@ -26,6 +27,7 @@ import epcontrol.census.Flux as flux
 from epcontrol.seir_environment import Granularity
 from epcontrol.UK_RL_school_weekly import run_model
 from epcontrol.UK_SEIR_Eames import UK
+from epcontrol.utils import export_states
 from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWrapper
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
@@ -46,13 +48,17 @@ def evaluate(env, model, num_steps):
     _model = env.unwrapped._model
     obs = env.reset()
     sus_before = _model.total_susceptibles()
+
+    states = list()
     for _ in range(num_steps):
         action, _states = model.predict(obs)
         obs, _, _, _ = env.step(action)
+        states.append(obs)
+
     sus_after = _model.total_susceptibles()
     attack_rate = 1.0 - (sus_after / sus_before)
     peak_day = _model.peak_day(env.unwrapped.infected_history)
-    return (attack_rate, peak_day, env.unwrapped.infected_history)
+    return attack_rate, peak_day, env.unwrapped.infected_history, states
 
 flux = flux.SingleDistrictStub(args.district_name)
 grouped_census = pd.read_csv(args.census, index_col=0)
@@ -90,10 +96,14 @@ baseline_model = UK(delta, args.R0, rho, gamma, district_names, grouped_census, 
 model = PPO2.load(args.path / "params.zip")
 print(args.outcome + "-improvement")
 for run in range(args.runs):
-    (attack_rate, peak_day, inf) = evaluate(env, model, n_weeks)
+    attack_rate, peak_day, inf, states = evaluate(env, model, n_weeks)
     if args.outcome == "ar":
         print(baseline_ar - attack_rate)
     elif args.outcome == "pd":
         print(peak_day - baseline_pd)
 
+# Export states to csv file
+export_states(states)
+
+# Close the environment
 env.close()
