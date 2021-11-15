@@ -14,7 +14,7 @@
                 "--R0", "1.8",
                 "--district_name", "Greenwich",
                 "--budget_in_weeks", "2",
-                "--census", "./data/great_brittain/census.csv",
+                "--census", "./data/single/census_iligan_city_1.csv",
                 "--runs", "10",
                 "--outcome", "ar",
                 "--path", "${workspaceFolder}/model/weights/weights_SEIR"
@@ -30,7 +30,7 @@
                 "--R0", "1.8",
                 "--district_name", "Greenwich",
                 "--budget_in_weeks", "2",
-                "--census", "./data/great_brittain/census.csv",
+                "--census", "./data/single/census_iligan_city_1.csv",
                 "--total_timesteps", "1000000",
                 "--outcome", "ar",
                 "--monitor_path", "${workspaceFolder}/model/weights/weights_SEIR"
@@ -46,7 +46,7 @@
                 "--R0", "1.8",
                 "--district_name", "Greenwich",
                 "--budget_in_weeks", "2",
-                "--census", "./data/great_brittain/census.csv",
+                "--census", "./data/single/census_iligan_city_1.csv",
                 "--runs", "10",
                 "--outcome", "ar",
                 "--path", "${workspaceFolder}/model/weights/weights_SEVIRD"
@@ -62,7 +62,7 @@
                 "--R0", "1.8",
                 "--district_name", "Greenwich",
                 "--budget_in_weeks", "2",
-                "--census", "./data/great_brittain/census.csv",
+                "--census", "./data/single/census_iligan_city_1.csv",
                 "--total_timesteps", "1000000",
                 "--outcome", "ar",
                 "--monitor_path", "${workspaceFolder}/model/weights/weights_SEVIRD"
