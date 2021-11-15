@@ -15,7 +15,7 @@
 # with this program; if not, write to pieter.libin@ai.vub.ac.be or arno.moonens@vub.be.
 
 from pathlib import Path
-from typing import List, Sequence
+from typing import List, Sequence, Dict, Optional
 from numba import njit
 import numpy as np
 from scipy.signal import savgol_filter
@@ -41,7 +41,8 @@ class SEVIRDModel:
         eta: float,
         c_v: float,
         alpha: float,
-        zeta: float
+        zeta: float,
+        contact_matrices: Optional[Dict[str, np.ndarray]] = None
     ) -> None:
 
         self.delta = delta
@@ -50,16 +51,20 @@ class SEVIRDModel:
 
         self.ag = Eames2012
         self.n_age_groups = len(age_ranges(self.ag))
+
         cm_path = Path(__file__).resolve().parent.parent / "data/contacts"
         cm_school = read_contact_matrix(cm_path / "conversational_school.csv")
         cm_no_school = read_contact_matrix(cm_path / "conversational_no_school.csv")
 
+        # TODO: Create initializer for contact matrices
         self.cms_school = np.empty((self.n_districts, self.n_age_groups, self.n_age_groups), dtype=np.float32)
         self.cms_no_school = np.empty((self.n_districts, self.n_age_groups, self.n_age_groups), dtype=np.float32)
         for i, (_, row) in enumerate(grouped_census.iterrows()):
             self.cms_school[i] = make_reciprocal(cm_school, row)
             self.cms_no_school[i] = make_reciprocal(cm_no_school, row)
 
+        if mu is None:
+            mu = np.log(R0) * .6
         self.mu = mu
 
         self.sde = sde
@@ -97,6 +102,7 @@ class SEVIRDModel:
         self.adult_susceptibles = self.districts_susceptibles[:, Eames2012.Adults.value]
 
         self.seir_state[:, Compartment.S.value, :] = self.districts_susceptibles
+        # TODO: Why multiply by (10 ** -6)
         self.seir_state[:, Compartment.E.value, :] = self.seir_state[:, Compartment.S.value, :] * 10 ** -6
 
     @property
@@ -108,8 +114,11 @@ class SEVIRDModel:
 
     def reset(self) -> None:
         self.seir_state[:, Compartment.S.value, :] = self.districts_susceptibles
+
+        # FIXME: Hard-coded reset depending on compartments
+        # TODO: Why multiply with (10 ** -6)?
         self.seir_state[:, Compartment.E.value, :] = self.seir_state[:, Compartment.S.value, :] * 10 ** -6
-        self.seir_state[:, [Compartment.I.value, Compartment.R.value], :] = 0
+        self.seir_state[:, [Compartment.V.value, Compartment.I.value, Compartment.R.value, Compartment.D.value], :] = 0
         self.districts_school_states.fill(1)
         self.districts_sparked.fill(0)
         self.districts_lambda.fill(0)
@@ -142,10 +151,14 @@ class SEVIRDModel:
         sparked_districts_indices = self.districts_sparked.nonzero()[0]
 
         if not self.sde:
-            W = np.zeros((self.sde_steps, len(sparked_districts_indices), 3, self.n_age_groups))
+            # FIXME: Fix this hard-coded parameter `6`
+            # NOTE: `6` here is the number of transitions between compartments
+            W = np.zeros((self.sde_steps, len(sparked_districts_indices), 6, self.n_age_groups))
 
         else:
-            W = np.random.standard_normal((self.sde_steps, len(sparked_districts_indices), 3, self.n_age_groups))
+            # FIXME: Fix this hard-coded parameter `6`
+            # NOTE: `6` here is the number of transitions between compartments
+            W = np.random.standard_normal((self.sde_steps, len(sparked_districts_indices), 6, self.n_age_groups))
 
         return _step(
             school_states,
@@ -173,7 +186,7 @@ class SEVIRDModel:
         )
 
 
-@njit(cache=True)
+# @njit(cache=True)
 def _step(
     school_states,
     seir_state,
@@ -208,6 +221,7 @@ def _step(
     # Overwrite school states with new ones
     districts_school_states[:] = school_states
 
+    # FIXME: If more contact matrices will be added, fix here
     # for all sparked districts,
     # keep the CM (sparked_districts_cms), which depends on whether the schools are open
     sparked_open_cms_indices = (districts_school_states[sparked_districts_indices] == 1).nonzero()[0]
@@ -217,6 +231,7 @@ def _step(
     sparked_districts_cms[sparked_closed_cms_indices] = cms_no_school[sparked_closed_cms_indices]
 
     n_sparked = len(sparked_districts_indices)
+    # NOTE: 4 here is the number of age groups
     weighted_inf_sums = np.empty((len(sparked_districts_indices), 4), dtype=np.float32)
     for sde_step in range(sde_steps):
         # matrix, with for each sparked district (row) the relative infected for all the age groups (column)
@@ -225,6 +240,7 @@ def _step(
         for idx in range(n_sparked):
             weighted_inf_sums[idx] = np.dot(sparked_districts_cms[idx], sparked_districts_ags_relative_I[idx])
 
+        # FIXME: Something's wrong here
         Ss = seir_state[sparked_districts_indices, Compartment.S.value]
         Es = seir_state[sparked_districts_indices, Compartment.E.value]
         Vs = seir_state[sparked_districts_indices, Compartment.V.value]
@@ -232,20 +248,16 @@ def _step(
         Rs = seir_state[sparked_districts_indices, Compartment.R.value]
         Ds = seir_state[sparked_districts_indices, Compartment.D.value]
 
-        # FIXME: Add hard-coded parameters in model parameters
-        # eta = 1
-        # c_v = 1
-        # alpha = 1
-        # zeta = 1
-
-        # FIXME: change rho to zeta
+        # Force of infection
         SEs = np.expand_dims(betas[sparked_districts_indices], axis=1) * weighted_inf_sums * Ss
+
         EVs = rho * Es
         VEs = eta * Vs
         EIs = ((1 - rho) * Es) + (c_v * Es)
         IRs = (gamma * Is) + (alpha * Is)
         IDs = zeta * Is
 
+        # Stochastic transformation
         d_SEs = delta * SEs + np.sqrt(delta * SEs) * W[sde_step][:, 0]
         d_EVs = delta * EVs + np.sqrt(delta * EVs) * W[sde_step][:, 1]
         d_VEs = delta * VEs + np.sqrt(delta * VEs) * W[sde_step][:, 2]

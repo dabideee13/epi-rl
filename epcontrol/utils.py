@@ -16,6 +16,12 @@
 
 #dis: derivative of the infected counts
 #ddis: second derivative of the infected counts
+import csv
+from typing import List, Optional
+
+import numpy as np
+
+
 def find_peaks(inf_normalized, dis, ddis, threshold):
     def around_zero(a, b):
         return (a < 0 < b) or (b < 0 < a)
@@ -27,3 +33,15 @@ def find_peaks(inf_normalized, dis, ddis, threshold):
                 peaks.append(idx)
 
     return peaks
+
+
+def export_states(states: List[np.ndarray], filename: Optional[str] = None) -> None:
+
+    # FIXME: add path to destination folder: 'data/processed/states'
+
+    if filename is None:
+        filename = 'states.csv'
+
+    with open(filename, 'w') as f:
+        write = csv.writer(f)
+        write.writerow(states)
