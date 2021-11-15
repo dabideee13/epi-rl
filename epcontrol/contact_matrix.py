@@ -207,12 +207,35 @@ def main():
         'elderly': elderly
     }
 
-    contact_matrix = ContactMatrix()
-    print(contact_matrix.get_contact_matrix(cm_indices))
+    closed_cm = ContactMatrix(
+        home=False,
+        prop_school=0,
+        prop_work=0,
+        prop_other=0,
+        sd_work=1,
+        sd_school=1,
+        sd_other=1
+    )
 
-    cm_path = Path('/home/ubuntu/Temporary/epi-rl/data/contacts')
-    contact_matrices = CMGetter(cm_path)
-    print(contact_matrices.contact_matrices)
+    open_cm = ContactMatrix(
+        home=False,
+        prop_school=1,
+        prop_work=1,
+        prop_other=1,
+        sd_work=0,
+        sd_school=0,
+        sd_other=0
+    )
+
+    closed_cm = closed_cm.get_contact_matrix(cm_indices)
+    open_cm = open_cm.get_contact_matrix(cm_indices)
+
+    cm_path = Path.joinpath(Path.cwd(), 'data/contacts/contact1')
+    closed_cm.to_csv(Path.joinpath(cm_path, 'closed_cm.csv'))
+    open_cm.to_csv(Path.joinpath(cm_path, 'open_cm.csv'))
+
+    # contact_matrices = CMGetter(cm_path)
+    # print(contact_matrices.contact_matrices)
 
 
 if __name__ == '__main__':
