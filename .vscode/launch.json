@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "args": [
                 "--R0", "1.8",
-                "--district_name", "Greenwich",
+                "--district_name", "IliganCity",
                 "--budget_in_weeks", "2",
                 "--census", "./data/single/census_iligan_city_1.csv",
                 "--runs", "10",
@@ -28,7 +28,7 @@
             "console": "integratedTerminal",
             "args": [
                 "--R0", "1.8",
-                "--district_name", "Greenwich",
+                "--district_name", "IliganCity",
                 "--budget_in_weeks", "2",
                 "--census", "./data/single/census_iligan_city_1.csv",
                 "--total_timesteps", "1000000",
@@ -44,7 +44,7 @@
             "console": "integratedTerminal",
             "args": [
                 "--R0", "1.8",
-                "--district_name", "Greenwich",
+                "--district_name", "IliganCity",
                 "--budget_in_weeks", "2",
                 "--census", "./data/single/census_iligan_city_1.csv",
                 "--runs", "10",
@@ -60,7 +60,7 @@
             "console": "integratedTerminal",
             "args": [
                 "--R0", "1.8",
-                "--district_name", "Greenwich",
+                "--district_name", "IliganCity",
                 "--budget_in_weeks", "2",
                 "--census", "./data/single/census_iligan_city_1.csv",
                 "--total_timesteps", "1000000",
