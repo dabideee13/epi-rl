@@ -1,7 +1,7 @@
 """Generate contact matrices for different actions (quarantine levels)."""
 
 import os
-from typing import List, Any, Dict, Tuple, Union
+from typing import List, Any, Dict, Tuple, Union, Callable, Optional
 import itertools
 from pathlib import Path
 
@@ -140,65 +140,60 @@ class ContactMatrix:
         return pd.DataFrame(contact_matrix, index=contact_matrix.keys())
 
 
-class CMAgeGroup:
+def cm_ages(first: int, last: int) -> List[str]:
 
-    def _increment(self, ages: str) -> str:
+    def increment(ages: str) -> str:
         left, right = ages.split(sep='-')
         new_left, new_right = int(left) + 5, int(right) + 5
         return f'{new_left}-{new_right}'
 
-    def _form_group(self, first) -> str:
+    def form_group() -> str:
         last = int(first) + 5
         return f'{first}-{last}'
 
-    def ages(self, first, last) -> List[str]:
+    group = form_group()
+    last_index = group.split(sep='-')[1]
+    groups = [group]
 
-        group = self._form_group(first)
+    while int(last_index) != last:
+        groups.append(increment(group))
+        group = increment(group)
         last_index = group.split(sep='-')[1]
-        groups = [group]
 
-        while int(last_index) != last:
-            groups.append(self._increment(group))
-            group = self._increment(group)
-            last_index = group.split(sep='-')[1]
-
-        return groups
+    return groups
 
 
-class CMGetter:
-    """Contact matrices retriever"""
+def cm_getter(cm_path: Union[str, Path]) -> Callable[[str], Dict[str, np.ndarray]]:
 
-    def __init__(self, cm_path: Union[Path, str]) -> None:
-        self._cm_path = cm_path
-        self._files = self._get_files()
-        self._names = self._get_names()
-        self._contact_matrices = self._get_contact_matrices()
+    def contact_matrix(key: Optional[str] = None) -> Dict[str, np.ndarray]:
+        if key:
+            return _get_contact_matrices(cm_path)[key]
+        return _get_contact_matrices(cm_path)
 
-    @property
-    def contact_matrices(self) -> Dict[str, np.ndarray]:
-        return self._contact_matrices
+    return contact_matrix
 
-    def _get_files(self) -> List[str]:
-        return [file for file in os.listdir(self._cm_path) if '.csv' in file]
 
-    def _get_names(self) -> List[str]:
-        return [Path(file).stem for file in self._files]
+def _get_contact_matrices(cm_path) -> Dict[str, np.ndarray]:
 
-    def _get_contact_matrices(self) -> Dict[str, np.ndarray]:
-        return {
-            name: read_contact_matrix(self._cm_path / file)
-            for name, file in zip(self._names, self._files)
-        }
+    def get_files() -> List[str]:
+        return [file for file in os.listdir(cm_path) if '.csv' in file]
+
+    def get_names() -> List[str]:
+        return [Path(file).stem for file in get_files()]
+
+    return {
+        name: read_contact_matrix(cm_path / file)
+        for name, file in zip(get_names(), get_files())
+    }
 
 
 def main():
 
     # Define age groups
-    cm = CMAgeGroup()
-    children = cm.ages(0, 5)
-    adolescents = cm.ages(5, 20)
-    adults = cm.ages(20, 65)
-    elderly = cm.ages(65, 80)
+    children = cm_ages(0, 5)
+    adolescents = cm_ages(5, 20)
+    adults = cm_ages(20, 65)
+    elderly = cm_ages(65, 80)
 
     cm_indices = {
         'children': children,
@@ -208,7 +203,7 @@ def main():
     }
 
     closed_cm = ContactMatrix(
-        home=False,
+        # home=False,
         prop_school=0,
         prop_work=0,
         prop_other=0,
@@ -218,7 +213,7 @@ def main():
     )
 
     open_cm = ContactMatrix(
-        home=False,
+        # home=False,
         prop_school=1,
         prop_work=1,
         prop_other=1,
@@ -230,12 +225,24 @@ def main():
     closed_cm = closed_cm.get_contact_matrix(cm_indices)
     open_cm = open_cm.get_contact_matrix(cm_indices)
 
-    cm_path = Path.joinpath(Path.cwd(), 'data/contacts/contact1')
-    closed_cm.to_csv(Path.joinpath(cm_path, 'closed_cm.csv'))
-    open_cm.to_csv(Path.joinpath(cm_path, 'open_cm.csv'))
+    path_Iligan = Path.joinpath(Path.cwd(), 'data/contacts/contact1')
+    path_Greenwich = Path.joinpath(Path.cwd(), 'data/contacts')
 
-    # contact_matrices = CMGetter(cm_path)
-    # print(contact_matrices.contact_matrices)
+    closed_cm.to_csv(
+        Path.joinpath(path_Iligan, 'closed_cm.csv'),
+        header=False,
+        index=False
+    )
+    open_cm.to_csv(
+        Path.joinpath(path_Iligan, 'open_cm.csv'),
+        header=False,
+        index=False
+    )
+
+    cm_Greenwich = cm_getter(path_Greenwich)
+    cm_Iligan = cm_getter(path_Iligan)
+    print(cm_Greenwich())
+    print(cm_Iligan())
 
 
 if __name__ == '__main__':

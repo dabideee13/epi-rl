@@ -15,7 +15,7 @@
 # with this program; if not, write to pieter.libin@ai.vub.ac.be or arno.moonens@vub.be.
 
 from enum import Enum
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple, Callable
 import numpy as np
 from gym import Env, spaces
 import pandas as pd
@@ -25,13 +25,16 @@ import epcontrol.compartments.AgeSEIR as AgeSEIR
 
 from epcontrol.UK_SEIR_Eames import UK
 
+
 class Granularity(Enum):
     DAY = 0
     WEEK = 1
 
+
 class Outcome(Enum):
     ATTACK_RATE = 0
     PEAK_DAY = 1
+
 
 class SEIREnvironment(Env):
     """SEIR environment."""
@@ -40,6 +43,7 @@ class SEIREnvironment(Env):
                  flux: Flux,
                  r0: float,
                  n_weeks: int,
+                 contact_matrix: Callable[[str], Dict[str, np.ndarray]],
                  rho: Optional[float] = 1,
                  gamma: Optional[float] = (1 / 1.8),
                  delta: Optional[float] = 0.5,
@@ -62,7 +66,7 @@ class SEIREnvironment(Env):
 
         self.start_budget_per_district_in_weeks = budget_per_district_in_weeks
         self._model_params = [delta, r0, rho, gamma, district_names, grouped_census,
-                              flux, mu, sde]
+                              flux, mu, sde, contact_matrix]
         self._model_seed = model_seed
         self._model = self._make_model()
         self._total_susceptibles = self._model.total_susceptibles()
