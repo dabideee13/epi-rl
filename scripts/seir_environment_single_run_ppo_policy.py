@@ -47,7 +47,7 @@ scaler = MinMaxScaler()
 n_weeks = 43
 granularity = Granularity.WEEK
 
-cm_path = Path.joinpath(Path.cwd(), 'data/contacts')
+cm_path = Path.joinpath(Path.cwd(), 'data/contacts/contact1')
 contact_matrix = cm_getter(cm_path)
 
 

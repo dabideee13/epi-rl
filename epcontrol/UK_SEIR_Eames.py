@@ -57,8 +57,11 @@ class UK:
         # cm_school = read_contact_matrix(cm_path / "conversational_school.csv")
         # cm_no_school = read_contact_matrix(cm_path / "conversational_no_school.csv")
 
-        cm_school = contact_matrix('conversational_school')
-        cm_no_school = contact_matrix('conversational_no_school')
+        # cm_school = contact_matrix('conversational_school')
+        # cm_no_school = contact_matrix('conversational_no_school')
+
+        cm_school = contact_matrix('open_cm')
+        cm_no_school = contact_matrix('closed_cm')
 
         self.cms_school = np.empty(
             (self.n_districts, self.n_age_groups, self.n_age_groups), dtype=np.float32
