@@ -4,6 +4,7 @@ General:<br>
 - TODO: Find mobility data for multi-agents
 - TODO: Use **kwargs in the parameters
 - FIXME: Add versions in requirements.txt
+- FIXME: Refactor environment and model. (Highly coupled)
 
 Rewards:<br>
 - TODO: Make a reward function that involves vaccination<br>
