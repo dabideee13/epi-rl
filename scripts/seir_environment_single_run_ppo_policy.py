@@ -35,10 +35,12 @@ parser = argparse.ArgumentParser(allow_abbrev=False)
 parser.add_argument("--R0", type=float, required=True)
 parser.add_argument("--district_name", required=True)
 parser.add_argument("--budget_in_weeks", type=int, required=True)
+
 parser.add_argument("--census", type=Path, required=True)
 parser.add_argument("--runs", type=int, required=True)
 parser.add_argument("--outcome", choices=["ar", "pd"], required=True)
 parser.add_argument("--path", type=Path, required=True)
+
 
 args = parser.parse_args()
 
@@ -115,7 +117,7 @@ for run in range(args.runs):
         print(peak_day - baseline_pd)
 
 # Export states to csv file
-export_states(states)
+export_states(states, filename='states_seir.csv')
 
 # Close the environment
 env.close()
