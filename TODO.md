@@ -20,6 +20,7 @@ Model parameters:<br>
 
 Actions:<br>
 - TODO: Generate contact matrices for 6 possible actions (ECQ, MECQ, GCQ, MGCQ, open, close)
+- TODO: Inject contact matrix in the model to fix hard-coded lines
 
 Observations:<br>
 - TODO: Add a decorator for unnormalizing observations
