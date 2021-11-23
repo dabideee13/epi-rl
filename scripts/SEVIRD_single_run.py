@@ -16,21 +16,20 @@
 
 import argparse
 from pathlib import Path
-import csv
 
 from gym.envs.registration import register, make
 import numpy as np
 import pandas as pd
 from stable_baselines import PPO2
+from sklearn.preprocessing import MinMaxScaler
 
 import epcontrol.census.Flux as flux
-# FIXME: Granularity, when different `Granularity` is imported, there will be a TypeError
-from epcontrol.SEVIRD_environment import Granularity, Outcome
+from epcontrol.SEVIRD_environment import Granularity
 from epcontrol.UK_RL_school_weekly import run_model
 from epcontrol.SEVIRD_model import SEVIRDModel
-from epcontrol.contact_matrix import CMGetter
 from epcontrol.utils import export_states
-from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWrapper, UnnormalizedObservationWrapper
+from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWrapper
+from epcontrol.contact_matrix import cm_getter
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
 parser.add_argument("--R0", type=float, required=True)
@@ -43,25 +42,23 @@ parser.add_argument("--path", type=Path, required=True)
 
 args = parser.parse_args()
 
-if args.outcome == 'ar':
-    outcome = Outcome.ATTACK_RATE
-elif args.outcome == 'pd':
-    outcome = Outcome.PEAK_DAY
-else:
-    raise ValueError("Wrong outcome")
+scaler = MinMaxScaler()
 
 
 def evaluate(env, model, num_steps):
     _model = env.unwrapped._model
     obs = env.reset()
+
+    states = [obs]
+    scaler.fit(obs.reshape(-1, 1))
     sus_before = _model.total_susceptibles()
 
-    states = list()
     for _ in range(num_steps):
+        obs = scaler.transform(obs.reshape(-1, 1)).reshape(-1)
         action, _states = model.predict(obs)
-        # FIXME: no values for other compartments
         obs, _, _, _ = env.step(action)
         states.append(obs)
+
     sus_after = _model.total_susceptibles()
     attack_rate = 1.0 - (sus_after / sus_before)
     peak_day = _model.peak_day(env.unwrapped.infected_history)
@@ -86,9 +83,8 @@ mu = np.log(args.R0) * .6
 sde = True
 
 # FIXME:
-# cm_path = Path('/home/ubuntu/Temporary/epi-rl/data/contacts')
-# contact_matrices = CMGetter(cm_path).contact_matrices
-contact_matrices = None
+cm_path = Path.joinpath(Path.cwd(), 'data/contacts/contact1')
+contact_matrix = cm_getter(cm_path)
 
 register(
     id="SEVIRDsingle-v0",
@@ -102,7 +98,6 @@ register(
         rho=rho,
         gamma=gamma,
         delta=delta,
-        outcome=outcome,
         step_granularity=granularity,
         model_seed=args.district_name,
         eta=eta,
@@ -112,21 +107,19 @@ register(
         mu=mu,
         sde=sde,
         budget_per_district_in_weeks=args.budget_in_weeks,
-        contact_matrices=contact_matrices
+        contact_matrix=contact_matrix
     )
 )
 
 env = make("SEVIRDsingle-v0")
-env = NormalizedObservationWrapper(env)
+# env = NormalizedObservationWrapper(env)
 env = NormalizedRewardWrapper(env)
-# FIXME:
-# env = UnnormalizedObservationWrapper(env)
 
 no_closures = [1] * n_weeks
 weekends = False
 district_names = grouped_census.index.to_list()
 
-baseline_model = SEVIRDModel(delta, args.R0, rho, gamma, district_names, grouped_census, flux, mu, sde, eta, c_v, alpha, zeta)
+baseline_model = SEVIRDModel(delta, args.R0, rho, gamma, district_names, grouped_census, flux, mu, sde, eta, c_v, alpha, zeta, contact_matrix)
 (baseline_pd, baseline_ar, _) = run_model(baseline_model, n_weeks, weekends, args.district_name, no_closures)
 
 # TODO: Why is it that PPO model is not loaded in the run_model and only here?
@@ -145,6 +138,6 @@ for run in range(args.runs):
     all_states.append(states)
 
 # Export states to csv file
-export_states(states)
+export_states(states, filename='states_sevird.csv')
 
 env.close()
