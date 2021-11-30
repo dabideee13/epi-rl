@@ -15,7 +15,7 @@
 # with this program; if not, write to pieter.libin@ai.vub.ac.be or arno.moonens@vub.be.
 
 from enum import Enum
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple, Callable
 import numpy as np
 from gym import Env, spaces
 import pandas as pd
@@ -46,18 +46,18 @@ class SEVIRDEnvironment(Env):
         rho: float,
         gamma: float,
         delta: float,
-        outcome: Outcome,
         step_granularity: Granularity,
         model_seed: str,
         eta: float,
         c_v: float,
         alpha: float,
         zeta: float,
+        contact_matrix: Callable[[str], Dict[str, np.ndarray]],
+        outcome: Optional[Outcome] = Outcome.ATTACK_RATE,
         mu: Optional[float] = None,
         sde: Optional[bool] = True,
         budget_per_district_in_weeks: Optional[int] = None,
         seed: Optional[int] = None,
-        contact_matrices: Optional[Dict[str, np.ndarray]] = None
     ) -> None:
         super().__init__()
 
@@ -71,7 +71,7 @@ class SEVIRDEnvironment(Env):
 
         self.start_budget_per_district_in_weeks = budget_per_district_in_weeks
         self._model_params = [delta, r0, rho, gamma, district_names, grouped_census,
-                              flux, mu, sde, eta, c_v, alpha, zeta, contact_matrices]
+                              flux, mu, sde, eta, c_v, alpha, zeta, contact_matrix]
         self._model_seed = model_seed
         self._model = self._make_model()
         self._total_susceptibles = self._model.total_susceptibles()

@@ -4,6 +4,7 @@ General:<br>
 - TODO: Find mobility data for multi-agents
 - TODO: Use **kwargs in the parameters
 - FIXME: Add versions in requirements.txt
+- FIXME: Refactor environment and model. (Highly coupled)
 
 Rewards:<br>
 - TODO: Make a reward function that involves vaccination<br>
@@ -12,12 +13,14 @@ Rewards:<br>
 
 Model:<br>
 - TODO: Estimate values for model parameters<br>
+- FIXME: Add hard-coded parameters in the class parameters
 
 Model parameters:<br>
 - FIXME: Determine the "right" values for latency rate. Is it valid to have a latency rate from `Exposed` to `Vaccinated` compartment?
 
 Actions:<br>
 - TODO: Generate contact matrices for 6 possible actions (ECQ, MECQ, GCQ, MGCQ, open, close)
+- TODO: Inject contact matrix in the model to fix hard-coded lines
 
 Observations:<br>
 - TODO: Add a decorator for unnormalizing observations
@@ -31,3 +34,4 @@ Flow:<br>
 - TODO: Continue with contact matrices handler
 - TODO: Try with random values first
 - TODO: Estimate model parameters
+

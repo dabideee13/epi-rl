@@ -29,15 +29,18 @@ from epcontrol.UK_RL_school_weekly import run_model
 from epcontrol.UK_SEIR_Eames import UK
 from epcontrol.utils import export_states
 from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWrapper
+from epcontrol.contact_matrix import cm_getter
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
 parser.add_argument("--R0", type=float, required=True)
 parser.add_argument("--district_name", required=True)
 parser.add_argument("--budget_in_weeks", type=int, required=True)
+
 parser.add_argument("--census", type=Path, required=True)
 parser.add_argument("--runs", type=int, required=True)
 parser.add_argument("--outcome", choices=["ar", "pd"], required=True)
 parser.add_argument("--path", type=Path, required=True)
+
 
 args = parser.parse_args()
 
@@ -46,16 +49,28 @@ scaler = MinMaxScaler()
 n_weeks = 43
 granularity = Granularity.WEEK
 
+<<<<<<< HEAD
+=======
+cm_path = Path.joinpath(Path.cwd(), 'data/contacts/contact1')
+contact_matrix = cm_getter(cm_path)
+
+>>>>>>> fd4279dae0595acdf71283a08b6ca449338c9918
 
 def evaluate(env, model, num_steps):
 
     _model = env.unwrapped._model
     obs = env.reset()
+<<<<<<< HEAD
     obs = scaler.fit_transform(obs.reshape(1, -1))
+=======
+
+    states = [obs]
+    scaler.fit(obs.reshape(-1, 1))
+>>>>>>> fd4279dae0595acdf71283a08b6ca449338c9918
     sus_before = _model.total_susceptibles()
 
-    states = list()
     for _ in range(num_steps):
+        obs = scaler.transform(obs.reshape(-1, 1)).reshape(-1)
         action, _states = model.predict(obs)
         obs, _, _, _ = env.step(action)
         states.append(scaler.inverse_transform(obs))
@@ -76,7 +91,8 @@ grouped_census = grouped_census.filter(items=[args.district_name], axis=0)
 register(id="SEIRsingle-v0",
          entry_point="epcontrol.seir_environment:SEIREnvironment",
          max_episode_steps=n_weeks * (7 if granularity == Granularity.DAY else 1),
-         kwargs=dict(grouped_census=grouped_census,
+         kwargs=dict(contact_matrix=contact_matrix,
+                     grouped_census=grouped_census,
                      flux=flux,
                      r0=args.R0,
                      n_weeks=(n_weeks * 2),
@@ -95,7 +111,7 @@ delta = .5
 rho = 1
 gamma = (1 / 1.8)
 mu = np.log(args.R0)*.6
-baseline_model = UK(delta, args.R0, rho, gamma, district_names, grouped_census, flux, mu, sde=True)
+baseline_model = UK(delta, args.R0, rho, gamma, district_names, grouped_census, flux, mu, sde=True, contact_matrix=contact_matrix)
 (baseline_pd, baseline_ar, _) = run_model(baseline_model, n_weeks, weekends, args.district_name, no_closures)
 
 model = PPO2.load(args.path / "params.zip")
@@ -108,7 +124,7 @@ for run in range(args.runs):
         print(peak_day - baseline_pd)
 
 # Export states to csv file
-export_states(states)
+export_states(states, filename='states_seir.csv')
 
 # Close the environment
 env.close()
