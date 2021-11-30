@@ -45,3 +45,7 @@ def export_states(states: List[np.ndarray], filename: Optional[str] = None) -> N
     with open(filename, 'w') as f:
         write = csv.writer(f)
         write.writerow(states)
+
+
+def scale_states(states: np.ndarray) -> np.ndarray:
+    return
