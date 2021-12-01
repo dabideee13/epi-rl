@@ -27,7 +27,7 @@ import epcontrol.census.Flux as flux
 from epcontrol.seir_environment import Granularity
 from epcontrol.UK_RL_school_weekly import run_model
 from epcontrol.UK_SEIR_Eames import UK
-from epcontrol.utils import export_states
+from epcontrol.utils import export_states, export_rewards, export_actions
 from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWrapper
 from epcontrol.contact_matrix import cm_getter
 
@@ -49,36 +49,39 @@ scaler = MinMaxScaler()
 n_weeks = 43
 granularity = Granularity.WEEK
 
-<<<<<<< HEAD
-=======
 cm_path = Path.joinpath(Path.cwd(), 'data/contacts/contact1')
 contact_matrix = cm_getter(cm_path)
 
->>>>>>> fd4279dae0595acdf71283a08b6ca449338c9918
 
 def evaluate(env, model, num_steps):
 
     _model = env.unwrapped._model
     obs = env.reset()
-<<<<<<< HEAD
-    obs = scaler.fit_transform(obs.reshape(1, -1))
-=======
 
     states = [obs]
+    rewards = []
+    actions = []
     scaler.fit(obs.reshape(-1, 1))
->>>>>>> fd4279dae0595acdf71283a08b6ca449338c9918
     sus_before = _model.total_susceptibles()
 
     for _ in range(num_steps):
         obs = scaler.transform(obs.reshape(-1, 1)).reshape(-1)
+
         action, _states = model.predict(obs)
+        actions.append(action[0])
+
         obs, _, _, _ = env.step(action)
-        states.append(scaler.inverse_transform(obs))
+        states.append(obs)
+        sus_after = _model.total_susceptibles()
+
+        # Attack rate for each timestep
+        _attack_rate = 1.0 - (sus_after / sus_before)
+        rewards.append(_attack_rate)
 
     sus_after = _model.total_susceptibles()
     attack_rate = 1.0 - (sus_after / sus_before)
     peak_day = _model.peak_day(env.unwrapped.infected_history)
-    return attack_rate, peak_day, env.unwrapped.infected_history, states
+    return attack_rate, peak_day, env.unwrapped.infected_history, states, rewards, actions
 
 
 flux = flux.SingleDistrictStub(args.district_name)
@@ -117,14 +120,16 @@ baseline_model = UK(delta, args.R0, rho, gamma, district_names, grouped_census, 
 model = PPO2.load(args.path / "params.zip")
 print(args.outcome + "-improvement")
 for run in range(args.runs):
-    attack_rate, peak_day, inf, states = evaluate(env, model, n_weeks)
+    attack_rate, peak_day, inf, states, rewards, actions = evaluate(env, model, n_weeks)
     if args.outcome == "ar":
         print(baseline_ar - attack_rate)
     elif args.outcome == "pd":
         print(peak_day - baseline_pd)
 
-# Export states to csv file
-export_states(states, filename='states_seir.csv')
+# Export data to csv file
+export_states(states, filename='states_seir_budget_10.csv')
+export_rewards(rewards, filename='rewards_seir_budget_10.csv')
+export_actions(actions, filename='actions_seir_budget_10.csv')
 
 # Close the environment
 env.close()

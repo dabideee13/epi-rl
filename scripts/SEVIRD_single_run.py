@@ -27,7 +27,7 @@ import epcontrol.census.Flux as flux
 from epcontrol.SEVIRD_environment import Granularity
 from epcontrol.UK_RL_school_weekly import run_model
 from epcontrol.SEVIRD_model import SEVIRDModel
-from epcontrol.utils import export_states
+from epcontrol.utils import export_states, export_actions, export_rewards
 from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWrapper
 from epcontrol.contact_matrix import cm_getter
 
@@ -46,23 +46,34 @@ scaler = MinMaxScaler()
 
 
 def evaluate(env, model, num_steps):
+
     _model = env.unwrapped._model
     obs = env.reset()
 
     states = [obs]
+    rewards = []
+    actions = []
     scaler.fit(obs.reshape(-1, 1))
     sus_before = _model.total_susceptibles()
 
     for _ in range(num_steps):
         obs = scaler.transform(obs.reshape(-1, 1)).reshape(-1)
+
         action, _states = model.predict(obs)
+        actions.append(action[0])
+
         obs, _, _, _ = env.step(action)
         states.append(obs)
+        sus_after = _model.total_susceptibles()
+
+        # Attack rate for each timestep
+        _attack_rate = 1.0 - (sus_after / sus_before)
+        rewards.append(_attack_rate)
 
     sus_after = _model.total_susceptibles()
     attack_rate = 1.0 - (sus_after / sus_before)
     peak_day = _model.peak_day(env.unwrapped.infected_history)
-    return attack_rate, peak_day, env.unwrapped.infected_history, states
+    return attack_rate, peak_day, env.unwrapped.infected_history, states, rewards, actions
 
 
 n_weeks = 43
@@ -130,7 +141,7 @@ all_states = list()
 for run in range(args.runs):
     # TODO: Know the difference between baseline_ar and attack_rate and why
     # TODO: What's the purpose of evaluate?
-    attack_rate, peak_day, inf, states = evaluate(env, model, n_weeks)
+    attack_rate, peak_day, inf, states, rewards, actions = evaluate(env, model, n_weeks)
     if args.outcome == "ar":
         print(baseline_ar - attack_rate)
     elif args.outcome == "pd":
@@ -139,5 +150,7 @@ for run in range(args.runs):
 
 # Export states to csv file
 export_states(states, filename='states_sevird.csv')
+export_rewards(rewards, filename='rewards_sevird.csv')
+export_actions(actions, filename='actions_sevird.csv')
 
 env.close()
