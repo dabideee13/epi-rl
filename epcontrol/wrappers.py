@@ -191,6 +191,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+
 class NormalizedObservationWrapper(ObservationWrapper):
     """
     Normalizes observations such that the values are

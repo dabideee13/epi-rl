@@ -17,8 +17,8 @@
 #dis: derivative of the infected counts
 #ddis: second derivative of the infected counts
 import csv
-from typing import List, Optional
 from pathlib import Path
+from typing import List, Optional
 
 import numpy as np
 
@@ -39,8 +39,35 @@ def find_peaks(inf_normalized, dis, ddis, threshold):
 def export_states(states: List[np.ndarray], filename: str = 'states.csv') -> None:
 
     # FIXME: add path to destination folder: 'data/processed/states'
-    states_path = lambda filename: Path.joinpath(Path.cwd(), 'data/results', filename)
+    states_path = lambda filename: Path.joinpath(Path.cwd(), 'data/processed/states', filename)
 
     with open(states_path(filename), 'w') as f:
         write = csv.writer(f)
         write.writerow(states)
+
+
+def export_rewards(rewards: List[np.ndarray], filename: str = 'rewards.csv') -> None:
+
+    # FIXME: add path to destination folder: 'data/processed/states'
+    rewards_path = lambda filename: Path.joinpath(Path.cwd(), 'data/processed/rewards', filename)
+
+    with open(rewards_path(filename), 'w') as f:
+        write = csv.writer(f)
+        write.writerow(rewards)
+
+
+def export_actions(actions: List[np.ndarray], filename: str = 'actions.csv') -> None:
+
+    # FIXME: add path to destination folder: 'data/processed/states'
+    actions_path = lambda filename: Path.joinpath(Path.cwd(), 'data/processed/actions', filename)
+
+    with open(actions_path(filename), 'w') as f:
+        write = csv.writer(f)
+        write.writerow(actions)
+
+
+def read_rewards(filename: str) -> List[str]:
+    with open(filename, 'r') as f:
+        csv_reader = csv.reader(f, delimiter=',')
+        rewards = list(csv_reader)[0]
+    return rewards
