@@ -29,11 +29,11 @@
             "args": [
                 "--R0", "1.8",
                 "--district_name", "IliganCity",
-                "--budget_in_weeks", "2",
+                "--budget_in_weeks", "10",
                 "--census", "./data/single/census_iligan_city_1.csv",
                 "--total_timesteps", "1000000",
                 "--outcome", "ar",
-                "--monitor_path", "${workspaceFolder}/model/weights/weights_SEIR"
+                "--monitor_path", "${workspaceFolder}/model/weights/weights_002"
             ]
         },
         {

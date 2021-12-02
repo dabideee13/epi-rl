@@ -91,7 +91,7 @@ grouped_census = grouped_census.filter(items=[args.district_name], axis=0)
 
 # We do n_weeks * 2, to have the same amount of time steps in the baseline model,
 # as the baseline model checks that we did not induce a second peak through our closures
-register(id="SEIRsingle-v0",
+register(id="SEIRsingle-v001",
          entry_point="epcontrol.seir_environment:SEIREnvironment",
          max_episode_steps=n_weeks * (7 if granularity == Granularity.DAY else 1),
          kwargs=dict(contact_matrix=contact_matrix,
@@ -103,7 +103,7 @@ register(id="SEIRsingle-v0",
                      model_seed=args.district_name,
                      budget_per_district_in_weeks=args.budget_in_weeks))
 
-env = make("SEIRsingle-v0")
+env = make("SEIRsingle-v001")
 # env = NormalizedObservationWrapper(env)
 env = NormalizedRewardWrapper(env)
 
@@ -127,9 +127,9 @@ for run in range(args.runs):
         print(peak_day - baseline_pd)
 
 # Export data to csv file
-export_states(states, filename='states_seir_budget_10.csv')
-export_rewards(rewards, filename='rewards_seir_budget_10.csv')
-export_actions(actions, filename='actions_seir_budget_10.csv')
+export_states(states, filename='states_001.csv')
+export_rewards(rewards, filename='rewards_001.csv')
+export_actions(actions, filename='actions_001.csv')
 
 # Close the environment
 env.close()

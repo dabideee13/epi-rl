@@ -31,6 +31,7 @@ import epcontrol.census.Flux as flux
 from epcontrol.seir_environment import Granularity
 from epcontrol.seir_environment import Outcome
 from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWrapper
+from epcontrol.contact_matrix import cm_getter
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
 parser.add_argument("--outcome", choices=["ar", "pd"], required=True)
@@ -75,10 +76,14 @@ if args.outcome == "ar":
 elif args.outcome == "pd":
     outcome = Outcome.PEAK_DAY
 
-register(id="SEIRsingle-v0",
+cm_path = Path.joinpath(Path.cwd(), 'data/contacts/contact1')
+contact_matrix = cm_getter(cm_path)
+
+register(id="SEIRsingle-v002",
          entry_point="epcontrol.seir_environment:SEIREnvironment",
          max_episode_steps=n_weeks * (7 if granularity == Granularity.DAY else 1),
-         kwargs=dict(grouped_census=grouped_census,
+         kwargs=dict(contact_matrix=contact_matrix,
+                     grouped_census=grouped_census,
                      flux=flux,
                      r0=args.R0,
                      n_weeks=n_weeks,
@@ -87,7 +92,7 @@ register(id="SEIRsingle-v0",
                      model_seed=args.district_name,
                      budget_per_district_in_weeks=args.budget_in_weeks))
 
-env = make("SEIRsingle-v0")
+env = make("SEIRsingle-v002")
 env = NormalizedObservationWrapper(env)
 if args.outcome == "ar":
     env = NormalizedRewardWrapper(env)
