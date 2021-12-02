@@ -34,6 +34,7 @@ from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWra
 from epcontrol.contact_matrix import cm_getter
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
+parser.add_argument("--id", type=str)
 parser.add_argument("--outcome", choices=["ar", "pd"], required=True)
 parser.add_argument("--district_name", required=True)
 parser.add_argument("--budget_in_weeks", type=int, required=True)
@@ -79,7 +80,7 @@ elif args.outcome == "pd":
 cm_path = Path.joinpath(Path.cwd(), 'data/contacts/contact1')
 contact_matrix = cm_getter(cm_path)
 
-register(id="SEIRsingle-v002",
+register(id=f"SEIRsingle-v{args.id}",
          entry_point="epcontrol.seir_environment:SEIREnvironment",
          max_episode_steps=n_weeks * (7 if granularity == Granularity.DAY else 1),
          kwargs=dict(contact_matrix=contact_matrix,
@@ -92,7 +93,7 @@ register(id="SEIRsingle-v002",
                      model_seed=args.district_name,
                      budget_per_district_in_weeks=args.budget_in_weeks))
 
-env = make("SEIRsingle-v002")
+env = make(f"SEIRsingle-v{args.id}")
 env = NormalizedObservationWrapper(env)
 if args.outcome == "ar":
     env = NormalizedRewardWrapper(env)

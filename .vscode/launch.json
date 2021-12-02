@@ -27,13 +27,14 @@
             "program": "${workspaceFolder}/scripts/seir_environment_single_sb_ppo.py",
             "console": "integratedTerminal",
             "args": [
+                "--id", "006",
                 "--R0", "1.8",
                 "--district_name", "IliganCity",
-                "--budget_in_weeks", "10",
+                "--budget_in_weeks", "12",
                 "--census", "./data/single/census_iligan_city_1.csv",
                 "--total_timesteps", "1000000",
                 "--outcome", "ar",
-                "--monitor_path", "${workspaceFolder}/model/weights/weights_002"
+                "--monitor_path", "${workspaceFolder}/model/weights/weights_006"
             ]
         },
         {
