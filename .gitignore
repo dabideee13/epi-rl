@@ -5,4 +5,4 @@
 .ipynb_checkpoints
 __pycache__
 *.srctrl*
-results
+*.local
