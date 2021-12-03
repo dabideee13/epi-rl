@@ -34,7 +34,7 @@ from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWra
 from epcontrol.contact_matrix import cm_getter
 
 parser = argparse.ArgumentParser(allow_abbrev=False)
-parser.add_argument("--id", type=str)
+parser.add_argument("--id", type=str, required=True)
 parser.add_argument("--outcome", choices=["ar", "pd"], required=True)
 parser.add_argument("--district_name", required=True)
 parser.add_argument("--budget_in_weeks", type=int, required=True)
