@@ -54,6 +54,7 @@ parser.add_argument("--max_grad_norm", type=float, default=None)
 parser.add_argument("--clip_range", type=float, default=0.2)
 
 parser.add_argument("--total_timesteps", type=int, required=True)
+parser.add_argument("--latency_rate", type=float, default=1)
 
 args = parser.parse_args()
 
@@ -91,7 +92,8 @@ register(id=f"SEIRsingle-v{args.id}",
                      step_granularity=granularity,
                      outcome=outcome,
                      model_seed=args.district_name,
-                     budget_per_district_in_weeks=args.budget_in_weeks))
+                     budget_per_district_in_weeks=args.budget_in_weeks,
+                     rho=args.latency_rate))
 
 env = make(f"SEIRsingle-v{args.id}")
 env = NormalizedObservationWrapper(env)
