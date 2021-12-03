@@ -11,14 +11,14 @@
             "program": "${workspaceFolder}/scripts/seir_environment_single_run_ppo_policy.py",
             "console": "integratedTerminal",
             "args": [
-                "--id", "009",
+                "--id", "010",
                 "--R0", "1.8",
                 "--district_name", "IliganCity",
-                "--budget_in_weeks", "20",
+                "--budget_in_weeks", "1000",
                 "--census", "./data/single/census_iligan_city_1.csv",
                 "--runs", "10",
                 "--outcome", "ar",
-                "--path", "${workspaceFolder}/model/weights/weights_009"
+                "--path", "${workspaceFolder}/model/weights/weights_010"
             ]
         },
         {
@@ -28,14 +28,14 @@
             "program": "${workspaceFolder}/scripts/seir_environment_single_sb_ppo.py",
             "console": "integratedTerminal",
             "args": [
-                "--id", "009",
+                "--id", "010",
                 "--R0", "1.8",
                 "--district_name", "IliganCity",
-                "--budget_in_weeks", "20",
+                "--budget_in_weeks", "1000",
                 "--census", "./data/single/census_iligan_city_1.csv",
                 "--total_timesteps", "1000000",
                 "--outcome", "ar",
-                "--monitor_path", "${workspaceFolder}/model/weights/weights_009"
+                "--monitor_path", "${workspaceFolder}/model/weights/weights_010"
             ]
         },
         {
