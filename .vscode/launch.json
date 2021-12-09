@@ -28,15 +28,15 @@
             "program": "${workspaceFolder}/scripts/seir_environment_single_sb_ppo.py",
             "console": "integratedTerminal",
             "args": [
-                "--id", "016",
+                "--id", "017",
                 "--R0", "1.8",
                 "--district_name", "IliganCity",
                 "--budget_in_weeks", "1000",
                 "--census", "./data/single/census_iligan_city_1.csv",
                 "--total_timesteps", "1000000",
                 "--outcome", "ar",
-                "--monitor_path", "${workspaceFolder}/model/weights/weights_016",
-                "--latency_rate", "0.4"
+                "--monitor_path", "${workspaceFolder}/model/weights/weights_017",
+                "--latency_rate", "0.3"
             ]
         },
         {
