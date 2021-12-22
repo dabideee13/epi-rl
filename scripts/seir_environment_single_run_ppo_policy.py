@@ -26,7 +26,9 @@ from sklearn.preprocessing import MinMaxScaler
 import epcontrol.census.Flux as flux
 from epcontrol.seir_environment import Granularity
 from epcontrol.UK_RL_school_weekly import run_model
-from epcontrol.UK_SEIR_Eames import UK
+# FIXME
+# from epcontrol.UK_SEIR_Eames import UK
+from epcontrol.UK_model_2 import UK
 from epcontrol.utils import export_states, export_rewards, export_actions
 from epcontrol.wrappers import NormalizedObservationWrapper, NormalizedRewardWrapper
 from epcontrol.contact_matrix import cm_getter
@@ -128,9 +130,9 @@ for run in range(args.runs):
         print(peak_day - baseline_pd)
 
 # Export data to csv file
-export_states(states, filename=f"states_{args.id}.csv")
-export_rewards(rewards, filename=f"rewards_{args.id}.csv")
-export_actions(actions, filename=f"actions_{args.id}.csv")
+export_states(states, filename=f"states_{args.id}_temp.csv")
+export_rewards(rewards, filename=f"rewards_{args.id}_temp.csv")
+export_actions(actions, filename=f"actions_{args.id}_temp.csv")
 
 # Close the environment
 env.close()

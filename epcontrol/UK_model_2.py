@@ -1,12 +1,12 @@
-# Deep reinforcement learning for large-scale epidemic control
-# Copyright (C) 2020  Pieter Libin, Arno Moonens, Fabian Perez-Sanjines.
+# deep reinforcement learning for large-scale epidemic control
+# copyright (c) 2020  pieter libin, arno moonens, fabian perez-sanjines.
 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# this program is free software; you can redistribute it and/or modify
+# it under the terms of the gnu general public license as published by
+# the free software foundation; either version 2 of the license, or
 # (at your option) any later version.
 
-# This program is distributed in the hope that it will be useful,
+# this program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -60,19 +60,43 @@ class UK:
         # cm_school = contact_matrix('conversational_school')
         # cm_no_school = contact_matrix('conversational_no_school')
 
-        cm_school = contact_matrix('open_cm')
-        cm_no_school = contact_matrix('closed_cm')
+        # cm_school = contact_matrix('open_cm')
+        # cm_no_school = contact_matrix('closed_cm')
+
+        cm_open = contact_matrix('open_cm')
+        cm_close = contact_matrix('closed_cm')
+        cm_ecq = contact_matrix('open_cm')
+        cm_mecq = contact_matrix('open_cm')
+        cm_gcq = contact_matrix('open_cm')
+        cm_mgcq = contact_matrix('open_cm')
 
         # TODO: add contact matrices here
-        self.cms_school = np.empty(
+        self.cms_open = np.empty(
             (self.n_districts, self.n_age_groups, self.n_age_groups), dtype=np.float32
         )
-        self.cms_no_school = np.empty(
+        self.cms_close = np.empty(
             (self.n_districts, self.n_age_groups, self.n_age_groups), dtype=np.float32
         )
+        self.cms_ecq = np.empty(
+            (self.n_districts, self.n_age_groups, self.n_age_groups), dtype=np.float32
+        )
+        self.cms_mecq = np.empty(
+            (self.n_districts, self.n_age_groups, self.n_age_groups), dtype=np.float32
+        )
+        self.cms_gcq = np.empty(
+            (self.n_districts, self.n_age_groups, self.n_age_groups), dtype=np.float32
+        )
+        self.cms_mgcq = np.empty(
+            (self.n_districts, self.n_age_groups, self.n_age_groups), dtype=np.float32
+        )
+
         for i, (_, row) in enumerate(grouped_census.iterrows()):
-            self.cms_school[i] = make_reciprocal(cm_school, row)
-            self.cms_no_school[i] = make_reciprocal(cm_no_school, row)
+            self.cms_open[i] = make_reciprocal(cm_open, row)
+            self.cms_close[i] = make_reciprocal(cm_close, row)
+            self.cms_ecq[i] = make_reciprocal(cm_ecq, row)
+            self.cms_mecq[i] = make_reciprocal(cm_mecq, row)
+            self.cms_gcq[i] = make_reciprocal(cm_gcq, row)
+            self.cms_mgcq[i] = make_reciprocal(cm_mgcq, row)
 
         self.mu = mu
 
@@ -82,7 +106,7 @@ class UK:
         self.gamma = gamma
         self.R0 = R0
         self.betas = np.asarray(
-            [compute_beta(R0, gamma, cm_school) for cm_school in self.cms_school],
+            [compute_beta(R0, gamma, cm_open) for cm_open in self.cms_open],
             np.float32,
         )
 
@@ -169,8 +193,12 @@ class UK:
         return _step(
             school_states,
             self.seir_state,
-            self.cms_school,
-            self.cms_no_school,
+            self.cms_open,
+            self.cms_close,
+            self.cms_ecq,
+            self.cms_mecq,
+            self.cms_gcq,
+            self.cms_mgcq,
             self.adult_susceptibles,
             self.districts_school_states,
             self.districts_sparked,
@@ -188,12 +216,16 @@ class UK:
         )
 
 
-@njit(cache=True)
+# @njit(cache=True)
 def _step(
     school_states,
     seir_state,
-    cms_school,
-    cms_no_school,
+    cms_open,
+    cms_close,
+    cms_ecq,
+    cms_mecq,
+    cms_gcq,
+    cms_mgcq,
     adult_susceptibles,
     districts_school_states,
     districts_sparked,
@@ -230,13 +262,39 @@ def _step(
     sparked_closed_cms_indices = (
         districts_school_states[sparked_districts_indices] == 0
     ).nonzero()[0]
+    sparked_ecq_cms_indices = (
+        districts_school_states[sparked_districts_indices] == 2
+    ).nonzero()[0]
+    sparked_mecq_cms_indices = (
+        districts_school_states[sparked_districts_indices] == 3
+    ).nonzero()[0]
+    sparked_gcq_cms_indices = (
+        districts_school_states[sparked_districts_indices] == 4
+    ).nonzero()[0]
+    sparked_mgcq_cms_indices = (
+        districts_school_states[sparked_districts_indices] == 5
+    ).nonzero()[0]
+
     sparked_districts_cms = np.empty(
-        (len(sparked_districts_indices),) + cms_school[0].shape, dtype=np.float32
+        (len(sparked_districts_indices),) + cms_open[0].shape, dtype=np.float32
     )
-    sparked_districts_cms[sparked_open_cms_indices] = cms_school[
+
+    sparked_districts_cms[sparked_open_cms_indices] = cms_open[
         sparked_open_cms_indices
     ]
-    sparked_districts_cms[sparked_closed_cms_indices] = cms_no_school[
+    sparked_districts_cms[sparked_closed_cms_indices] = cms_close[
+        sparked_closed_cms_indices
+    ]
+    sparked_districts_cms[sparked_ecq_cms_indices] = cms_ecq[
+        sparked_closed_cms_indices
+    ]
+    sparked_districts_cms[sparked_mecq_cms_indices] = cms_mecq[
+        sparked_closed_cms_indices
+    ]
+    sparked_districts_cms[sparked_gcq_cms_indices] = cms_gcq[
+        sparked_closed_cms_indices
+    ]
+    sparked_districts_cms[sparked_mgcq_cms_indices] = cms_mgcq[
         sparked_closed_cms_indices
     ]
 
@@ -292,7 +350,7 @@ def _step(
     # i.e., flux_k = T_i,k, the k-th column of Ti,j.
     non_sparked_districts_indices = np.where(districts_sparked == 0)[0]
     if non_sparked_districts_indices.size > 0:
-        M_aas = cms_school[non_sparked_districts_indices, adults_idx, adults_idx]
+        M_aas = cms_open[non_sparked_districts_indices, adults_idx, adults_idx]
         flux_k = flux_tij[:, non_sparked_districts_indices]
         S_a_k = adult_susceptibles[non_sparked_districts_indices]
         lambda_k = (

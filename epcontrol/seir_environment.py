@@ -23,7 +23,9 @@ import pandas as pd
 import epcontrol.census.Flux as Flux
 import epcontrol.compartments.AgeSEIR as AgeSEIR
 
-from epcontrol.UK_SEIR_Eames import UK
+# FIXME
+# from epcontrol.UK_SEIR_Eames import UK
+from epcontrol.UK_model_2 import UK
 
 
 class Granularity(Enum):

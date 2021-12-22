@@ -20,7 +20,9 @@ import numpy as np
 import pandas as pd
 
 import epcontrol.census.Flux as flux
-from epcontrol.UK_SEIR_Eames import UK
+# FIXME
+# from epcontrol.UK_SEIR_Eames import UK
+from epcontrol.UK_model_2 import UK
 
 from epcontrol.UK_RL_school_weekly import run_model
 
